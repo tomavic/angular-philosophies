@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angular Philosophies: خلاصة خبرة السنين في Angular، جنبك وإنت شغال</title>
+<meta name="description" content="الطريقة اللي بكتب بيها Angular 22، متكتبة: دليل تقراه، ونفس النصايح كقواعد يمشي عليها الـ AI اللي بتستخدمه. 132 قاعدة، 12 فصل، وكل مثال اتعمله compile واتجرّب.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Angular Philosophies: خلاصة خبرة السنين في Angular، جنبك وإنت شغال">
+<meta property="og:description" content="الطريقة اللي بكتب بيها Angular 22، متكتبة: دليل تقراه، ونفس النصايح كقواعد يمشي عليها الـ AI اللي بتستخدمه. 132 قاعدة، 12 فصل، وكل مثال اتعمله compile واتجرّب.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/ar/">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ar_EG">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="alternate" hreflang="en" href="../index.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+<a class="skip" href="#main">روح للمحتوى</a>
+
+<header class="top wrap">
+  <a class="mark" href="./" lang="en" dir="ltr"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="#install">الاستخدام</a><a href="#chapters">الفصول</a><a href="#story">الحكاية</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../index.html" lang="en" hreflang="en">English</a></nav>
+</header>
+
+<main id="main">
+
+<section class="hero wrap" aria-labelledby="hero-h">
+  <p class="kicker" lang="en" dir="ltr">Angular 22 · TypeScript 6.0 · signals · NgRx SignalStore</p>
+  <h1 id="hero-h">خلاصة خبرة السنين في Angular، <span class="pen">جنبك<svg class="pen-mark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M14 36C10 16 70 5 130 7c44 2 64 14 62 26-2 14-46 22-98 22C40 55 6 48 8 31 10 20 34 12 62 9"/></svg></span> وإنت شغال.</h1>
+  <div class="hero-foot">
+    <p class="lead">Angular Philosophies هو الطريقة اللي بكتب بيها Angular، متكتبة: اتناشر فصل تقراهم، ونفس النصايح كـ 132 قاعدة يمشي عليها الـ AI اللي بتستخدمه وهو شغال. لـ Angular 22.</p>
+    <p class="ctas"><a class="btn" href="#install">ابدأ استخدامه <span aria-hidden="true">&darr;</span></a><a class="btn ghost" href="#story">اتفرج على مراجعة</a></p>
+  </div>
+  <a class="pr" href="#story">
+    <span class="pr-state">مطلوب تعديلات</span>
+    <span class="pr-title" lang="en" dir="ltr">Add orders list page with filters <span class="pr-no">#482</span></span>
+    <span class="pr-meta">فتحه مساعد الـ AI · ملف واحد اتغيّر</span>
+    <span class="pr-row"><code dir="ltr">order-list.component.ts</code><span class="plus" dir="ltr">+37</span><span class="pr-c">7 تعليقات مراجعة</span></span>
+  </a>
+</section>
+
+<section class="install wrap" id="install" aria-labelledby="in-h">
+  <h2 id="in-h">خلّي الـ AI يشتغل بيه.</h2>
+  <p class="sub">اختار الأداة. كل سطر بيضيف نفس القواعد.</p>
+  <div class="tabs" data-tabs>
+    <div class="tablist" role="tablist" aria-label="الأداة اللي بتستخدمها"><button type="button" role="tab" id="tab-0" aria-controls="panel-0" aria-selected="true" tabindex="0">Claude Code</button><button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="false" tabindex="-1">أي agent</button><button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" tabindex="-1">Cursor</button><button type="button" role="tab" id="tab-3" aria-controls="panel-3" aria-selected="false" tabindex="-1">شات</button></div>
+      <div class="panel" role="tabpanel" id="panel-0" aria-labelledby="tab-0">
+        <p>الـ skill و MCP server في خطوة واحدة. الـ skill بيتحمّل لما تشتغل على Angular.</p>
+        <div class="cmd" dir="ltr"><pre><code id="cmd-0">/plugin marketplace add tomavic/angular-philosophies
+/plugin install angular-philosophies@angular-philosophies</code></pre><button type="button" class="copy" data-copy="cmd-0" data-done="اتنسخ">انسخ</button></div>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-1" aria-labelledby="tab-1" hidden>
+        <p>ملف AGENTS.md تحطه في root المشروع، لـ Codex وCopilot وGemini CLI وغيرهم.</p>
+        <div class="cmd" dir="ltr"><pre><code id="cmd-1">curl -o AGENTS.md https://raw.githubusercontent.com/tomavic/angular-philosophies/main/ai/AGENTS.md</code></pre><button type="button" class="copy" data-copy="cmd-1" data-done="اتنسخ">انسخ</button></div>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-2" aria-labelledby="tab-2" hidden>
+        <p>شغّله من root المشروع. القواعد هتنزل في .cursor/rules.</p>
+        <div class="cmd" dir="ltr"><pre><code id="cmd-2">mkdir -p .cursor/rules &amp;&amp; curl -sSL https://github.com/tomavic/angular-philosophies/archive/refs/heads/main.tar.gz | tar -xz --strip-components=3 -C .cursor/rules angular-philosophies-main/ai/cursor</code></pre><button type="button" class="copy" data-copy="cmd-2" data-done="اتنسخ">انسخ</button></div>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-3" aria-labelledby="tab-3" hidden>
+        <p>مفيش وصول للملفات؟ اديله llms-full.txt، الدليل كله في ملف واحد.</p>
+        <div class="cmd" dir="ltr"><pre><code id="cmd-3">https://raw.githubusercontent.com/tomavic/angular-philosophies/main/ai/llms-full.txt</code></pre><button type="button" class="copy" data-copy="cmd-3" data-done="اتنسخ">انسخ</button></div>
+      </div>
+  </div>
+  <p class="note">لو مشروعك ليه قواعده، اكتبها فوق القواعد المتولّدة. المشروع بيكسب على الدليل.</p>
+</section>
+
+<section class="chapters wrap" id="chapters" aria-labelledby="ch-h">
+  <div class="ch-head">
+    <div><h2 id="ch-h">أو اقراه بنفسك.</h2><p class="sub">اتناشر فصل، كل واحد بيخلص بقواعده. وقتك ضيق؟ ابدأ بـ 03.</p></div>
+  </div>
+  <div class="toc">
+    <div class="grp"><p class="g">البنية</p>
+      <a class="ch" href="../chapters/00-philosophy.html"><span class="no">00</span><span class="tt">الفلسفة</span><span class="bl">ابني اللي محتاجه وبس، حط كل نوع كود في مكان واحد، واجعل الصح هو الأسهل.</span><span class="rc">6 قواعد</span></a>
+      <a class="ch" href="../chapters/01-architecture.html"><span class="no">01</span><span class="tt">المعمارية</span><span class="bl">ازاي الـ workspace بيتقسم لـ domains وطبقات، وإيه اللي يقدر يعمل import لإيه، وفين الكود الجديد يروح.</span><span class="rc">11 قاعدة</span></a>
+      <a class="ch" href="../chapters/02-components.html"><span class="no">02</span><span class="tt">الـ Components</span><span class="bl">components standalone وبدون zone، بـ signal APIs وtemplates بسيطة، وتسمية الملفات.</span><span class="rc">14 قاعدة</span></a>
+    </div>
+    <div class="grp"><p class="g">الـ State</p>
+      <a class="ch start" href="../chapters/03-signal-store.html"><span class="no">03</span><span class="tt">الـ signal store <em>ابدأ هنا</em></span><span class="bl">شكل الـ store: الـ facade، وstore لكل صفحة، ومين اللي بيعمله provide.</span><span class="rc">15 قاعدة</span></a>
+      <a class="ch" href="../chapters/04-data-access.html"><span class="no">04</span><span class="tt">الوصول للبيانات</span><span class="bl">القراية بـ resources، والكتابة بـ mutations، وإيه اللي بيفضل لما الـ reload يفشل.</span><span class="rc">13 قاعدة</span></a>
+      <a class="ch" href="../chapters/05-toolkit.html"><span class="no">05</span><span class="tt">الـ toolkit</span><span class="bl">أنهي extensions تستخدمها، وأنهي تستنى عليها، وأنهي تبعد عنها.</span><span class="rc">8 قواعد</span></a>
+      <a class="ch" href="../chapters/06-custom-features.html"><span class="no">06</span><span class="tt">الـ store features المخصصة</span><span class="bl">اكتب الـ feature الخاص بيك، وخلّي الـ stores تتكلم مع بعض بـ events.</span><span class="rc">8 قواعد</span></a>
+    </div>
+    <div class="grp"><p class="g">الجودة</p>
+      <a class="ch" href="../chapters/07-forms-routing-i18n.html"><span class="no">07</span><span class="tt">الفورم والـ routing والترجمة والـ RTL</span><span class="bl">Reactive Forms، وroutes بتتحمّل lazy، والترجمة، وlayouts بتتقلب للعربي.</span><span class="rc">14 قاعدة</span></a>
+      <a class="ch" href="../chapters/08-accessibility.html"><span class="no">08</span><span class="tt">إمكانية الوصول</span><span class="bl">تباين بتقيسه، وكيبورد وfocus، ومعنى مش معتمد على اللون.</span><span class="rc">12 قاعدة</span></a>
+      <a class="ch" href="../chapters/09-testing.html"><span class="no">09</span><span class="tt">الاختبارات</span><span class="bl">ازاي تكتب spec في سبع خطوات، بـ fakes بدل الـ stubs.</span><span class="rc">15 قاعدة</span></a>
+      <a class="ch" href="../chapters/10-tooling.html"><span class="no">10</span><span class="tt">الأدوات</span><span class="bl">pnpm وNx وTypeScript strict وlint وformat وcommits وhooks.</span><span class="rc">12 قاعدة</span></a>
+    </div>
+    <div class="grp"><p class="g">الـ AI</p>
+      <a class="ch" href="../chapters/11-using-with-ai.html"><span class="no">11</span><span class="tt">استخدام الدليل مع الـ AI</span><span class="bl">إضافة الدليل كـ skill أو plugin أو ملفات قواعد أو MCP server.</span><span class="rc">4 قواعد</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="story" id="story" aria-labelledby="a1-h">
+  <div class="act wrap">
+    <p class="time"><span><b dir="ltr">09:12</b>الصبح، أول اليوم</span></p>
+    <h2 id="a1-h">بتطلب من الـ AI يعملك صفحة.</h2>
+    <p class="sub">بتفتح Claude Code أو Cursor أو Copilot، وتكتب سطر واحد: عايز صفحة طلبات فيها بحث وتقسيم صفحات. نوع الصفحة اللي في كل app منها عشرة.</p>
+    <div class="ask"><span class="who">إنت ← للـ AI</span><p lang="en" dir="ltr">Add an orders list page with filters.</p></div>
+  </div>
+
+  <div class="review wrap">
+    <div class="pane" aria-hidden="true">
+      <div class="pane-bar" dir="ltr"><span class="file">order-list.component.ts</span><span class="pane-count" id="pane-count"></span></div>
+      <div class="pane-code" id="pane-code" dir="ltr"><div class="ln" data-f=""><b>1</b><span><span class="k">import</span> { Component, OnDestroy, OnInit } <span class="k">from</span> <span class="s">'@angular/core'</span>;</span></div><div class="ln" data-f="facade"><b>2</b><span><span class="k">import</span> { HttpClient } <span class="k">from</span> <span class="s">'@angular/common/http'</span>;</span></div><div class="ln" data-f="subscribe"><b>3</b><span><span class="k">import</span> { Subscription } <span class="k">from</span> <span class="s">'rxjs'</span>;</span></div><div class="ln" data-f="alias"><b>4</b><span><span class="k">import</span> { Order } <span class="k">from</span> <span class="s">'../../../shared/models/order'</span>;</span></div><div class="ln" data-f=""><b>5</b><span> </span></div><div class="ln" data-f=""><b>6</b><span>@<span class="f">Component</span>({</span></div><div class="ln" data-f=""><b>7</b><span>  selector: <span class="s">'app-order-list'</span>,</span></div><div class="ln" data-f=""><b>8</b><span>  templateUrl: <span class="s">'./order-list.component.html'</span>,</span></div><div class="ln" data-f=""><b>9</b><span>})</span></div><div class="ln" data-f=""><b>10</b><span><span class="k">export</span> <span class="k">class</span> OrderListComponent <span class="k">implements</span> OnInit, OnDestroy {</span></div><div class="ln" data-f="default"><b>11</b><span>  orders?: Order[];</span></div><div class="ln" data-f=""><b>12</b><span>  page = 1;</span></div><div class="ln" data-f=""><b>13</b><span>  search = <span class="s">''</span>;</span></div><div class="ln" data-f="subscribe"><b>14</b><span>  <span class="k">private</span> sub?: Subscription;</span></div><div class="ln" data-f=""><b>15</b><span> </span></div><div class="ln" data-f="inject facade"><b>16</b><span>  <span class="f">constructor</span>(<span class="k">private</span> http: HttpClient) {}</span></div><div class="ln" data-f=""><b>17</b><span> </span></div><div class="ln" data-f=""><b>18</b><span>  <span class="f">ngOnInit</span>() {</span></div><div class="ln" data-f="load"><b>19</b><span>    <span class="k">this</span>.<span class="f">load</span>();</span></div><div class="ln" data-f=""><b>20</b><span>  }</span></div><div class="ln" data-f=""><b>21</b><span> </span></div><div class="ln" data-f="page"><b>22</b><span>  <span class="f">onSearch</span>(search: string) {</span></div><div class="ln" data-f="page"><b>23</b><span>    <span class="k">this</span>.search = search;</span></div><div class="ln" data-f="load"><b>24</b><span>    <span class="k">this</span>.<span class="f">load</span>();</span></div><div class="ln" data-f=""><b>25</b><span>  }</span></div><div class="ln" data-f=""><b>26</b><span> </span></div><div class="ln" data-f="load"><b>27</b><span>  <span class="f">load</span>() {</span></div><div class="ln" data-f="subscribe"><b>28</b><span>    <span class="k">this</span>.sub?.<span class="f">unsubscribe</span>();</span></div><div class="ln" data-f="facade"><b>29</b><span>    <span class="k">this</span>.sub = <span class="k">this</span>.http</span></div><div class="ln" data-f="facade"><b>30</b><span>      .get&lt;Order[]&gt;(<span class="s">`/api/orders?page=${this.page}&amp;q=${this.search}`</span>)</span></div><div class="ln" data-f="subscribe"><b>31</b><span>      .<span class="f">subscribe</span>(orders =&gt; (<span class="k">this</span>.orders = orders));</span></div><div class="ln" data-f=""><b>32</b><span>  }</span></div><div class="ln" data-f=""><b>33</b><span> </span></div><div class="ln" data-f="subscribe"><b>34</b><span>  <span class="f">ngOnDestroy</span>() {</span></div><div class="ln" data-f="subscribe"><b>35</b><span>    <span class="k">this</span>.sub?.<span class="f">unsubscribe</span>();</span></div><div class="ln" data-f=""><b>36</b><span>  }</span></div><div class="ln" data-f=""><b>37</b><span>}</span></div></div>
+      <p class="pane-build" dir="ltr"><i></i>Build succeeded · 0 errors · 0 warnings</p>
+    </div>
+    <div class="steps">
+      <article class="step intro" data-f="">
+        <p class="time"><span><b dir="ltr">09:13</b>بعد دقيقة</span></p>
+        <h2>الـ AI بيرد في ثواني. الكود بيعمل compile، واللستة بتظهر.</h2>
+        <p class="sub">غالبًا كنت هتعمله merge. أغلب كود Angular على الإنترنت شكله كده، فده اللي الموديل بيتعلم يكتبه.</p>
+      </article>
+      <article class="step intro" data-f="">
+        <p class="time"><span><b dir="ltr">09:14</b>بعد دقيقتين</span></p>
+        <h2>وبعدين أنا براجعه. 7 تعليقات.</h2>
+        <p class="sub">كل تعليق بيقتبس قاعدة من الدليل بالحرف، وبيقول إيه اللي هيبوظ لو اتجاهلتها.</p>
+      </article>
+      <article class="step comment" data-f="alias" data-i="1">
+        <p class="who"><span class="av" aria-hidden="true">AP</span><b lang="en" dir="ltr">Angular Philosophies</b><span class="where">سطر 4 · 1 من 7</span></p>
+        <h3>path بيتكسر لما فولدر يتنقل.</h3>
+        <blockquote lang="en" dir="ltr">Import through path aliases (<code>@shop/...</code>, <code>@/...</code>); never use <code>../../</code> across feature or library boundaries.</blockquote>
+        <p class="why">التلات مستويات ../ دي بتقول الملف قاعد فين، مش هو إيه. انقل الـ feature وكل import زي ده هيتكسر.</p>
+        <a class="ch-link" href="../chapters/01-architecture.html">01 · المعمارية <span aria-hidden="true">&larr;</span></a>
+      </article>
+      <article class="step comment" data-f="inject" data-i="2">
+        <p class="who"><span class="av" aria-hidden="true">AP</span><b lang="en" dir="ltr">Angular Philosophies</b><span class="where">سطر 16 · 2 من 7</span></p>
+        <h3>inject من الـ constructor.</h3>
+        <blockquote lang="en" dir="ltr">Inject dependencies with <code>inject()</code> in field initialisers; do not use constructors for injection.</blockquote>
+        <p class="why">طريقة واحدة للـ inject في كل حتة: الـ components والـ functions والـ store features كلها بتستخدم inject()، ومفيش حاجة معتمدة على ترتيب الـ constructor.</p>
+        <a class="ch-link" href="../chapters/02-components.html">02 · الـ Components <span aria-hidden="true">&larr;</span></a>
+      </article>
+      <article class="step comment" data-f="default" data-i="3">
+        <p class="who"><span class="av" aria-hidden="true">AP</span><b lang="en" dir="ltr">Angular Philosophies</b><span class="where">سطر 11 · 3 من 7</span></p>
+        <h3>undefined لحد ما السيرفر يرد.</h3>
+        <blockquote lang="en" dir="ltr">Give every resource a <code>defaultValue</code> and <code>{ errorHandling: 'previous value' }</code>; never write <code>?.</code> or <code>??</code> on a resource value in a component.</blockquote>
+        <p class="why">فالـ template بيتملي ?. والـ empty state بيظهر لحظة قبل أول صفحة.</p>
+        <a class="ch-link" href="../chapters/04-data-access.html">04 · الوصول للبيانات <span aria-hidden="true">&larr;</span></a>
+      </article>
+      <article class="step comment" data-f="facade" data-i="4">
+        <p class="who"><span class="av" aria-hidden="true">AP</span><b lang="en" dir="ltr">Angular Philosophies</b><span class="where">سطور 2، 16، 29، 30 · 4 من 7</span></p>
+        <h3>الصفحة بتكلّم السيرفر بنفسها.</h3>
+        <blockquote lang="en" dir="ltr">Make a <code>signalStore</code> the facade, API layer and state layer for its slice; components never inject <code>HttpClient</code> or a data service.</blockquote>
+        <p class="why">كده الـ component شايل الـ URL والـ params والـ error handling، والصفحة الجاية هتنسخ التلاتة.</p>
+        <a class="ch-link" href="../chapters/03-signal-store.html">03 · الـ signal store <span aria-hidden="true">&larr;</span></a>
+      </article>
+      <article class="step comment" data-f="subscribe" data-i="5">
+        <p class="who"><span class="av" aria-hidden="true">AP</span><b lang="en" dir="ltr">Angular Philosophies</b><span class="where">سطور 3، 14، 28، 31، 34، 35 · 5 من 7</span></p>
+        <h3>subscription لازم تفضل ماسكها بإيدك.</h3>
+        <blockquote lang="en" dir="ltr">Never call <code>.subscribe()</code> in a component; use signals, resources or <code>rxMethod</code>.</blockquote>
+        <p class="why">كل subscribe هو leak مستني unsubscribe اتنسى. ودي محتاجة تتقفل في مكانين أصلًا.</p>
+        <a class="ch-link" href="../chapters/03-signal-store.html">03 · الـ signal store <span aria-hidden="true">&larr;</span></a>
+      </article>
+      <article class="step comment" data-f="load" data-i="6">
+        <p class="who"><span class="av" aria-hidden="true">AP</span><b lang="en" dir="ltr">Angular Philosophies</b><span class="where">سطور 19، 24، 27 · 6 من 7</span></p>
+        <h3>load() لازم حد يفتكرها.</h3>
+        <blockquote lang="en" dir="ltr">Never add a <code>load()</code> method that a component must call after a filter changes; derive reads from state with resources.</blockquote>
+        <p class="why">ضيف فلتر status بكرة، انسى نداء واحد، واللستة هتفضل تعرض النتيجة القديمة من غير ما حد ياخد باله.</p>
+        <a class="ch-link" href="../chapters/03-signal-store.html">03 · الـ signal store <span aria-hidden="true">&larr;</span></a>
+      </article>
+      <article class="step comment" data-f="page" data-i="7">
+        <p class="who"><span class="av" aria-hidden="true">AP</span><b lang="en" dir="ltr">Angular Philosophies</b><span class="where">سطور 22، 23 · 7 من 7</span></p>
+        <h3>البحث بيسيبك في صفحة 3.</h3>
+        <blockquote lang="en" dir="ltr">Reset <code>page</code> to 1 in every filter setter.</blockquote>
+        <p class="why">ابحث وإنت في صفحة 3، والسيرفر هيرجّع صفحة 3 من النتايج. غالبًا فاضية، فاليوزر هيفتكر إن مفيش حاجة طابقت. ودي bug حقيقية.</p>
+        <a class="ch-link" href="../chapters/03-signal-store.html">03 · الـ signal store <span aria-hidden="true">&larr;</span></a>
+      </article>
+      <article class="step outro" data-f="*">
+        <h2>تصليح السبعة بإيدك ياخد بعد الضهر كله.</h2>
+        <p class="sub">أو الـ AI يقرا الدليل قبل ما يكتب أول سطر.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="after wrap" id="after" aria-labelledby="a4-h">
+  <p class="time"><span><b dir="ltr">09:20</b>بعد 8 دقايق من أول طلب</span></p>
+  <h2 id="a4-h">نفس الطلب، بس المرة دي مع الدليل.</h2>
+  <p class="sub">الـ component بيصغر لحد ما يبقى اللي الصفحة المفروض تكونه: store وtemplate. كل اللي كان بيعمله بإيده راح لـ store بيقرا من الـ state. من 9:12 لـ 9:20: تمان دقايق، ومفيش حاجة محتاجة تتصلّح.</p>
+  <div class="after-grid">
+    <div class="morph-wrap">
+      <div class="pane-bar" dir="ltr"><span class="file">order-list.component.ts</span><button type="button" class="replay" id="replay">شغّل التغيير تاني</button></div>
+      <div class="morph" id="morph" data-phase="after" dir="ltr"><div class="ln d"><i aria-hidden="true">&minus;</i><span><span class="k">import</span> { Component, OnDestroy, OnInit } <span class="k">from</span> <span class="s">'@angular/core'</span>;</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span><span class="k">import</span> { HttpClient } <span class="k">from</span> <span class="s">'@angular/common/http'</span>;</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span><span class="k">import</span> { Subscription } <span class="k">from</span> <span class="s">'rxjs'</span>;</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span><span class="k">import</span> { Order } <span class="k">from</span> <span class="s">'../../../shared/models/order'</span>;</span></div><div class="ln a"><i aria-hidden="true">+</i><span><span class="k">import</span> { Component, inject } <span class="k">from</span> <span class="s">'@angular/core'</span>;</span></div><div class="ln a"><i aria-hidden="true">+</i><span><span class="k">import</span> { OrderListStore } <span class="k">from</span> <span class="s">'./order-list.store'</span>;</span></div><div class="ln a"><i aria-hidden="true">+</i><span><span class="k">import</span> { ORDER_STATUS_OPTIONS } <span class="k">from</span> <span class="s">'./order.model'</span>;</span></div><div class="ln c"><i aria-hidden="true"></i><span> </span></div><div class="ln c"><i aria-hidden="true"></i><span>@<span class="f">Component</span>({</span></div><div class="ln c"><i aria-hidden="true"></i><span>  selector: <span class="s">'app-order-list'</span>,</span></div><div class="ln c"><i aria-hidden="true"></i><span>  templateUrl: <span class="s">'./order-list.component.html'</span>,</span></div><div class="ln a"><i aria-hidden="true">+</i><span>  providers: [OrderListStore],</span></div><div class="ln a"><i aria-hidden="true">+</i><span>  host: { <span class="k">class</span>: <span class="s">'block p-4'</span> },</span></div><div class="ln c"><i aria-hidden="true"></i><span>})</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span><span class="k">export</span> <span class="k">class</span> OrderListComponent <span class="k">implements</span> OnInit, OnDestroy {</span></div><div class="ln a"><i aria-hidden="true">+</i><span><span class="k">export</span> <span class="k">class</span> OrderListComponent {</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  orders?: Order[];</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  page = 1;</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  search = <span class="s">''</span>;</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  <span class="k">private</span> sub?: Subscription;</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span> </span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  <span class="f">constructor</span>(<span class="k">private</span> http: HttpClient) {}</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span> </span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  <span class="f">ngOnInit</span>() {</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>    <span class="k">this</span>.<span class="f">load</span>();</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  }</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span> </span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  <span class="f">onSearch</span>(search: string) {</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>    <span class="k">this</span>.search = search;</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>    <span class="k">this</span>.<span class="f">load</span>();</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  }</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span> </span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  <span class="f">load</span>() {</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>    <span class="k">this</span>.sub?.<span class="f">unsubscribe</span>();</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>    <span class="k">this</span>.sub = <span class="k">this</span>.http</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>      .get&lt;Order[]&gt;(<span class="s">`/api/orders?page=${this.page}&amp;q=${this.search}`</span>)</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>      .<span class="f">subscribe</span>(orders =&gt; (<span class="k">this</span>.orders = orders));</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  }</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span> </span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  <span class="f">ngOnDestroy</span>() {</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>    <span class="k">this</span>.sub?.<span class="f">unsubscribe</span>();</span></div><div class="ln d"><i aria-hidden="true">&minus;</i><span>  }</span></div><div class="ln a"><i aria-hidden="true">+</i><span>  <span class="k">protected</span> <span class="k">readonly</span> store = <span class="f">inject</span>(OrderListStore);</span></div><div class="ln a"><i aria-hidden="true">+</i><span>  <span class="k">protected</span> <span class="k">readonly</span> statuses = ORDER_STATUS_OPTIONS;</span></div><div class="ln c"><i aria-hidden="true"></i><span>}</span></div></div>
+    </div>
+    <ul class="counts"><li><span class="num">14</span><span class="lbl">سطر بس في الـ component، بدل 37.</span></li><li><span class="num">مفيش</span><span class="lbl"><bdi>subscribe</bdi> في الـ component. كان فيه 1.</span></li><li><span class="num">مفيش</span><span class="lbl"><bdi>load()</bdi> في الـ component. كان فيه 3.</span></li><li><span class="num">مفيش</span><span class="lbl"><bdi>HttpClient</bdi> في الـ component. كان فيه 2.</span></li></ul>
+  </div>
+  <details class="store">
+    <summary>افتح الـ store اللي كتبه</summary>
+    <p>ده الـ store اللي الـ AI بيكتبه وهو ماشي على الدليل. ونفس الكود موجود في الدليل نفسه ومتجرّب: بيعمل compile، وليه tests بتعدّي.</p>
+    <div class="pane-code" dir="ltr"><div class="ln"><b>1</b><span><span class="k">import</span> { httpResource } <span class="k">from</span> <span class="s">'@angular/common/http'</span>;</span></div><div class="ln"><b>2</b><span><span class="k">import</span> { computed } <span class="k">from</span> <span class="s">'@angular/core'</span>;</span></div><div class="ln"><b>3</b><span><span class="k">import</span> { toObservable, toSignal } <span class="k">from</span> <span class="s">'@angular/core/rxjs-interop'</span>;</span></div><div class="ln"><b>4</b><span><span class="k">import</span> { patchState, signalStore, withComputed, withMethods, withProps, withState } <span class="k">from</span> <span class="s">'@ngrx/signals'</span>;</span></div><div class="ln"><b>5</b><span><span class="k">import</span> { httpMutation, withMutations, withResource } <span class="k">from</span> <span class="s">'@ngrx-toolkit/core'</span>;</span></div><div class="ln"><b>6</b><span><span class="k">import</span> { debounceTime } <span class="k">from</span> <span class="s">'rxjs'</span>;</span></div><div class="ln"><b>7</b><span><span class="k">import</span> { guardedDevtools } <span class="k">from</span> <span class="s">'./guarded-devtools'</span>;</span></div><div class="ln"><b>8</b><span><span class="k">import</span> { Order, OrderStatus, Page } <span class="k">from</span> <span class="s">'./order.model'</span>;</span></div><div class="ln"><b>9</b><span> </span></div><div class="ln"><b>10</b><span><span class="k">interface</span> OrderListState {</span></div><div class="ln"><b>11</b><span>  page: number;</span></div><div class="ln"><b>12</b><span>  search: string;</span></div><div class="ln"><b>13</b><span>  status: OrderStatus | null;</span></div><div class="ln"><b>14</b><span>}</span></div><div class="ln"><b>15</b><span> </span></div><div class="ln"><b>16</b><span><span class="k">const</span> initialState: OrderListState = { page: 1, search: <span class="s">''</span>, status: null };</span></div><div class="ln"><b>17</b><span><span class="k">const</span> EMPTY_PAGE: Page&lt;Order&gt; = { items: [], total: 0 };</span></div><div class="ln"><b>18</b><span> </span></div><div class="ln"><b>19</b><span><span class="k">export</span> <span class="k">const</span> OrderListStore = <span class="f">signalStore</span>(</span></div><div class="ln"><b>20</b><span>  <span class="f">guardedDevtools</span>(<span class="s">'orderList'</span>),</span></div><div class="ln"><b>21</b><span>  <span class="f">withState</span>(initialState),</span></div><div class="ln"><b>22</b><span>  <span class="c">// A debounced copy of the search box. Derived state stays a signal, never a subscription.</span></span></div><div class="ln"><b>23</b><span>  <span class="f">withProps</span>(store =&gt; ({</span></div><div class="ln"><b>24</b><span>    _debouncedSearch: <span class="f">toSignal</span>(<span class="f">toObservable</span>(store.search).<span class="f">pipe</span>(<span class="f">debounceTime</span>(300)), { initialValue: <span class="s">''</span> }),</span></div><div class="ln"><b>25</b><span>  })),</span></div><div class="ln"><b>26</b><span>  <span class="c">// Reads are resources derived from state: changing a filter re-derives the request, nobody calls load().</span></span></div><div class="ln"><b>27</b><span>  <span class="f">withResource</span>(</span></div><div class="ln"><b>28</b><span>    store =&gt; ({</span></div><div class="ln"><b>29</b><span>      list: httpResource&lt;Page&lt;Order&gt;&gt;(</span></div><div class="ln"><b>30</b><span>        () =&gt; ({</span></div><div class="ln"><b>31</b><span>          url: <span class="s">'/api/orders'</span>,</span></div><div class="ln"><b>32</b><span>          params: {</span></div><div class="ln"><b>33</b><span>            page: store.<span class="f">page</span>(),</span></div><div class="ln"><b>34</b><span>            ...(store.<span class="f">_debouncedSearch</span>() ? { search: store.<span class="f">_debouncedSearch</span>() } : {}),</span></div><div class="ln"><b>35</b><span>            ...(store.<span class="f">status</span>() ? { status: store.<span class="f">status</span>()! } : {}),</span></div><div class="ln"><b>36</b><span>          },</span></div><div class="ln"><b>37</b><span>        }),</span></div><div class="ln"><b>38</b><span>        { defaultValue: EMPTY_PAGE },</span></div><div class="ln"><b>39</b><span>      ),</span></div><div class="ln"><b>40</b><span>    }),</span></div><div class="ln"><b>41</b><span>    { errorHandling: <span class="s">'previous value'</span> },</span></div><div class="ln"><b>42</b><span>  ),</span></div><div class="ln"><b>43</b><span>  <span class="f">withMutations</span>(store =&gt; ({</span></div><div class="ln"><b>44</b><span>    cancel: <span class="f">httpMutation</span>({</span></div><div class="ln"><b>45</b><span>      request: (id: number) =&gt; ({ url: <span class="s">`/api/orders/${id}/cancel`</span>, method: <span class="s">'POST'</span>, body: {} }),</span></div><div class="ln"><b>46</b><span>      onSuccess: () =&gt; store.<span class="f">_listReload</span>(),</span></div><div class="ln"><b>47</b><span>    }),</span></div><div class="ln"><b>48</b><span>  })),</span></div><div class="ln"><b>49</b><span>  <span class="f">withComputed</span>(store =&gt; ({</span></div><div class="ln"><b>50</b><span>    pageCount: <span class="f">computed</span>(() =&gt; Math.<span class="f">max</span>(1, Math.<span class="f">ceil</span>(store.<span class="f">listValue</span>().total / 20))),</span></div><div class="ln"><b>51</b><span>  })),</span></div><div class="ln"><b>52</b><span>  <span class="f">withMethods</span>(store =&gt; ({</span></div><div class="ln"><b>53</b><span>    <span class="f">setSearch</span>(search: string) {</span></div><div class="ln"><b>54</b><span>      <span class="f">patchState</span>(store, { search, page: 1 });</span></div><div class="ln"><b>55</b><span>    },</span></div><div class="ln"><b>56</b><span>    <span class="f">setStatus</span>(status: OrderStatus | null) {</span></div><div class="ln"><b>57</b><span>      <span class="f">patchState</span>(store, { status, page: 1 });</span></div><div class="ln"><b>58</b><span>    },</span></div><div class="ln"><b>59</b><span>    <span class="f">setPage</span>(page: number) {</span></div><div class="ln"><b>60</b><span>      <span class="f">patchState</span>(store, { page });</span></div><div class="ln"><b>61</b><span>    },</span></div><div class="ln"><b>62</b><span>    /** Refetch the same request. A failed reload keeps the last good value; see docs/04-data-access.md. */</span></div><div class="ln"><b>63</b><span>    <span class="f">refresh</span>() {</span></div><div class="ln"><b>64</b><span>      store.<span class="f">_listReload</span>();</span></div><div class="ln"><b>65</b><span>    },</span></div><div class="ln"><b>66</b><span>    <span class="f">reset</span>() {</span></div><div class="ln"><b>67</b><span>      <span class="f">patchState</span>(store, initialState);</span></div><div class="ln"><b>68</b><span>    },</span></div><div class="ln"><b>69</b><span>  })),</span></div><div class="ln"><b>70</b><span>);</span></div></div>
+  </details>
+</section>
+
+<section class="close wrap" aria-label="الفكرة">
+  <blockquote><p>خلاصة خبرة السنين في شكل جديد، تقدر تستعمله مع الـ AI، وكأني أنا موجود معاك وبقولك على كل النصايح وإنت شغال.</p><footer><a href="https://github.com/tomavic">حاتم</a></footer></blockquote>
+</section>
+
+</main>
+
+<footer class="foot wrap">
+  <p>Angular Philosophies، دليل أسلوب لـ Angular 22. اتراجع على Angular 22.2 في نوفمبر 2026.</p>
+  <p class="small">الخطوط: IBM Plex Sans Arabic وIBM Plex Sans.</p>
+</footer>
+
+<script src="../js/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data access | Angular Philosophies</title>
+<meta name="description" content="Reading with resources, writing with mutations, and what a failed reload keeps.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Data access | Angular Philosophies">
+<meta property="og:description" content="Reading with resources, writing with mutations, and what a failed reload keeps.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/04-data-access.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">04</span>
+    <p class="time"><span>Chapter 04 · State</span></p>
+    <h1>Data access</h1>
+    <p class="lead">Reading with resources, writing with mutations, and what a failed reload keeps.</p>
+    <p class="ch-facts"><span>13 rules</span><span>4 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/04-data-access.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="resource" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#reads-resources-derived-from-state">Reads: resources derived from state</a></li><li><a href="#writes-mutations-not-resources">Writes: mutations, not resources</a></li><li><a href="#don-t-fetch-what-you-already-know">Don't fetch what you already know</a></li><li><a href="#interceptors">Interceptors</a></li><li><a href="#errors">Errors</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p>How a page reads from the server, writes to it, and shows what went wrong. The tools are <code>httpResource</code> for reads, <code>httpMutation</code> for writes, functional interceptors for everything cross-cutting, and signals for the result.</p>
+<h2 id="reads-resources-derived-from-state">Reads: resources derived from state</h2>
+<p>A read is a resource whose request is computed from signals. When a signal the request reads changes, the resource refetches by itself. Nobody calls <code>load()</code>.</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-7" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-7"><span class="f">withResource</span>(
+  store =&gt; ({
+    list: httpResource&lt;Page&lt;Order&gt;&gt;(
+      () =&gt; ({ url: <span class="s">'/api/orders'</span>, params: { page: store.<span class="f">page</span>(), ...(store.<span class="f">status</span>() ? { status: store.<span class="f">status</span>()! } : {}) } }),
+      { defaultValue: EMPTY_PAGE },
+    ),
+  }),
+  { errorHandling: <span class="s">'previous value'</span> },
+),</code></pre></div>
+<p><code>withResource</code> comes from <code>@ngrx-toolkit/core</code> and is marked <code>@experimental</code> in v22. A named resource adds <code>listValue()</code>, <code>listStatus()</code>, <code>listError()</code>, <code>listIsLoading()</code> and a private <code>_listReload()</code> to the store. A component reads those signals and nothing else.</p>
+<p>Two things go on every resource, and neither is optional:</p>
+<ul><li><strong>A <code>defaultValue</code>.</strong> Without one the value type is <code>T | undefined</code>, and every consumer needs a <code>?.</code> or a <code>??</code>.</li><li><strong><code>errorHandling: 'previous value'</code>.</strong> The default (<code>'undefined value'</code>) widens the type the same way.</li></ul>
+<p>Together they keep the value non-nullable end to end, so <code>store.listValue().items</code> is always an array. If you find yourself writing <code>?.</code> on a resource value in a component, the store is missing one of the two. Fix the store.</p>
+<h3 id="what-previous-value-does-and-does-not-keep">What "previous value" does and does not keep</h3>
+<p>This is worth knowing exactly, because it is easy to assume more than it does.</p>
+<div class="table-wrap"><table><thead><tr><th>Situation</th><th>What <code>listValue()</code> holds</th></tr></thead><tbody><tr><td data-label="Situation">A reload of the same request fails (<code>refresh()</code>)</td><td data-label="What `listValue()` holds">The last good value. <code>listError()</code> is set, so the page can say the data is stale</td></tr><tr><td data-label="Situation">A changed filter or page starts a new request and it fails</td><td data-label="What `listValue()` holds">The <code>defaultValue</code>. A new request is not a reload, so there is no previous value to keep</td></tr></tbody></table></div>
+<p>Both are covered by tests in <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/examples/order-list.store.spec.ts">order-list.store.spec.ts</a>. Design the page for both: show the stale list with a "try again" button after a failed reload, and show the empty state plus an error after a failed filter.</p>
+<h3 id="a-read-that-only-one-component-needs">A read that only one component needs</h3>
+<p>A resource used by one component and nothing else can live in the component with plain <code>httpResource</code>. Move it into a store when a second component needs the result or the call becomes a command. A page reading several resources folds their statuses into one with <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/api-status.ts"><code>apiStatus</code></a>, so the template has a single skeleton and a single error state:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-8" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-8"><span class="k">protected</span> <span class="k">readonly</span> status = <span class="f">apiStatus</span>(<span class="k">this</span>.orders.status, <span class="k">this</span>.stats.status);</code></pre></div>
+<h2 id="writes-mutations-not-resources">Writes: mutations, not resources</h2>
+<p><code>httpResource</code> is for GET. Every POST, PATCH, PUT and DELETE is an <code>httpMutation</code>:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-9" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-9"><span class="f">withMutations</span>(store =&gt; ({
+  cancel: <span class="f">httpMutation</span>({
+    request: (id: number) =&gt; ({ url: <span class="s">`/api/orders/${id}/cancel`</span>, method: <span class="s">'POST'</span>, body: {} }),
+    onSuccess: () =&gt; store.<span class="f">_listReload</span>(),
+  }),
+})),</code></pre></div>
+<p>Each mutation exposes <code>cancelIsPending()</code>, <code>cancelStatus()</code>, <code>cancelError()</code>, and the method itself returns a promise of a result, so a component can <code>await store.cancel(id)</code> and branch on the status. Check the API's real verbs first: if it has no <code>PUT</code>, a save is <code>PATCH</code> when an id exists and <code>POST</code> when it doesn't, and one mutation can pick between them in its <code>request</code> function.</p>
+<p>A successful write reloads the reads it affected, inside <code>onSuccess</code>, so the list and the stats never disagree.</p>
+<h2 id="don-t-fetch-what-you-already-know">Don't fetch what you already know</h2>
+<p>If an endpoint returns a compile-time constant (the values of an enum, a fixed list of options), do not call it. Put the constant in the model file (<code>ORDER_STATUS_OPTIONS</code>) and use it. The endpoint can keep existing for other consumers; stopping one call is not a reason to delete a route. Search the whole repository for other callers before removing either side.</p>
+<h2 id="interceptors">Interceptors</h2>
+<p>Cross-cutting HTTP behaviour lives in functional interceptors, registered once, in order, by a single provider function such as <code>provideShopInterceptors()</code>:</p>
+<div class="table-wrap"><table><thead><tr><th>Interceptor</th><th>Job</th></tr></thead><tbody><tr><td data-label="Interceptor">API prefix</td><td data-label="Job">Adds the base URL from configuration</td></tr><tr><td data-label="Interceptor">Clean query params</td><td data-label="Job">Drops empty and <code>undefined</code> params so a store doesn't have to</td></tr><tr><td data-label="Interceptor">Accept-Language</td><td data-label="Job">Sends the current language, so a language change refetches in the right one</td></tr><tr><td data-label="Interceptor">Response unwrap</td><td data-label="Job">Unwraps a <code>{ data }</code> envelope if the backend uses one</td></tr><tr><td data-label="Interceptor">Error</td><td data-label="Job">Turns a failed request into a typed error and a toast</td></tr><tr><td data-label="Interceptor">Unauthorised</td><td data-label="Job">Sends a 401 to the login page and clears the session</td></tr></tbody></table></div>
+<p>Anything that needs an exception, such as a guest flow that must not send credentials, asks for it with an <code>HttpContext</code> token (<code>GUEST_REQUEST</code>) that the interceptor reads. The interceptor never matches feature URLs, because then the core library would know about its features.</p>
+<h2 id="errors">Errors</h2>
+<ul><li>Backend errors are typed once (<code>ApiError</code>, <code>ApiErrorResult</code> in the core models) and mapped by the error interceptor.</li><li>A failed read shows an error state with a retry that calls the store's <code>refresh()</code>. A failed write shows a toast or an inline message, chosen by where the user is looking.</li><li>Translate the message. Interceptors and stores carry translation keys, and the template translates them.</li><li>Track <code>status</code> and <code>error</code> in state for commands built with <code>rxMethod</code>; resources and mutations track their own.</li></ul>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Read server data with resources derived from state (<code>httpResource</code> via <code>withResource</code>); never with a <code>load()</code> method.</li><li>Give every resource a <code>defaultValue</code> and <code>{ errorHandling: 'previous value' }</code>; never write <code>?.</code> or <code>??</code> on a resource value in a component.</li><li>Design pages for both failure cases: a failed reload keeps the last value, a failed changed request falls back to the <code>defaultValue</code>.</li><li>Keep a resource in its component only while one component uses it; move it into a store when a second needs it.</li><li>Fold several resource statuses into one with <code>apiStatus</code> so a page has one loading state and one error state.</li><li>Write with <code>withMutations</code> and <code>httpMutation</code>; never use <code>httpResource</code> for POST, PATCH, PUT or DELETE.</li><li>Reload the affected reads in a mutation's <code>onSuccess</code>.</li><li>Check the API's real verbs before choosing PUT or PATCH.</li><li>Never call an endpoint for a compile-time constant; keep it as a <code>const</code> in the model file.</li><li>Search the whole repository for other callers before deleting a frontend call or a backend route.</li><li>Implement cross-cutting HTTP behaviour as functional interceptors registered by one provider function.</li><li>Never let an interceptor match feature URLs; use an <code>HttpContext</code> token for exceptions.</li><li>Type backend errors once and show failures through translation keys.</li></ol>
+  <pre id="rules-md" hidden>- Read server data with resources derived from state (`httpResource` via `withResource`); never with a `load()` method.
+- Give every resource a `defaultValue` and `{ errorHandling: 'previous value' }`; never write `?.` or `??` on a resource value in a component.
+- Design pages for both failure cases: a failed reload keeps the last value, a failed changed request falls back to the `defaultValue`.
+- Keep a resource in its component only while one component uses it; move it into a store when a second needs it.
+- Fold several resource statuses into one with `apiStatus` so a page has one loading state and one error state.
+- Write with `withMutations` and `httpMutation`; never use `httpResource` for POST, PATCH, PUT or DELETE.
+- Reload the affected reads in a mutation's `onSuccess`.
+- Check the API's real verbs before choosing PUT or PATCH.
+- Never call an endpoint for a compile-time constant; keep it as a `const` in the model file.
+- Search the whole repository for other callers before deleting a frontend call or a backend route.
+- Implement cross-cutting HTTP behaviour as functional interceptors registered by one provider function.
+- Never let an interceptor match feature URLs; use an `HttpContext` token for exceptions.
+- Type backend errors once and show failures through translation keys.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="03-signal-store.html" rel="prev"><small>Before</small><span class="pn">03</span><span class="pt">The signal store</span></a>
+    <a href="05-toolkit.html" rel="next"><small>Next</small><span class="pn">05</span><span class="pt">The toolkit</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

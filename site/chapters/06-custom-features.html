@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Custom store features | Angular Philosophies</title>
+<meta name="description" content="Writing your own store feature, and letting stores talk through events.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Custom store features | Angular Philosophies">
+<meta property="og:description" content="Writing your own store feature, and letting stores talk through events.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/06-custom-features.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">06</span>
+    <p class="time"><span>Chapter 06 · State</span></p>
+    <h1>Custom store features</h1>
+    <p class="lead">Writing your own store feature, and letting stores talk through events.</p>
+    <p class="ch-facts"><span>8 rules</span><span>2 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/06-custom-features.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="compose" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#when-to-write-one">When to write one</a></li><li><a href="#a-feature-with-state-computed-values-and-methods">A feature with state, computed values and methods</a></li><li><a href="#a-feature-that-needs-another-feature">A feature that needs another feature</a></li><li><a href="#connecting-a-feature-to-a-store-s-own-signals">Connecting a feature to a store's own signals</a></li><li><a href="#state-that-follows-other-state">State that follows other state</a></li><li><a href="#when-stores-must-talk-to-each-other">When stores must talk to each other</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p><code>signalStoreFeature</code> lets you package state, computed values and methods as one reusable piece, and put it in any store with a single line. It is the most powerful thing in SignalStore and the easiest to overuse.</p>
+<h2 id="when-to-write-one">When to write one</h2>
+<p><strong>Write a feature the third time you copy the same block between stores.</strong> Not before.</p>
+<p>A feature written on the first use guesses at what varies. After three real copies you know which parts are the same and which differ, and the feature takes exactly those as parameters. This is the same rule as <a href="00-philosophy.html">the philosophy chapter</a>: write the abstraction the third time.</p>
+<p>Three blocks that show up again and again in list and search stores, and are the usual first features:</p>
+<div class="table-wrap"><table><thead><tr><th>Feature</th><th>The repeated code</th></tr></thead><tbody><tr><td data-label="Feature"><code>withRequestStatus()</code></td><td data-label="The repeated code">A <code>loading</code> flag, an <code>error</code> flag and a <code>loaded</code> flag that can disagree, in every <code>rxMethod</code> store</td></tr><tr><td data-label="Feature"><code>withServerPagination()</code></td><td data-label="The repeated code"><code>page</code>, <code>pageSize</code>, <code>total</code>, <code>pageCount</code> and a <code>setPage</code> in every list store</td></tr><tr><td data-label="Feature"><code>withFilters()</code></td><td data-label="The repeated code">A filter patch that also has to send the user back to page 1</td></tr></tbody></table></div>
+<p>Reads built on resources and writes built on mutations don't need <code>withRequestStatus</code>: they already expose <code>status</code>, <code>isLoading</code> and <code>error</code>. It exists for stores built on <code>rxMethod</code>.</p>
+<h2 id="a-feature-with-state-computed-values-and-methods">A feature with state, computed values and methods</h2>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-13" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-13"><span class="k">export</span> type RequestStatus = <span class="s">'idle'</span> | <span class="s">'loading'</span> | <span class="s">'success'</span> | <span class="s">'error'</span>;
+
+<span class="k">export</span> function <span class="f">withRequestStatus</span>() {
+  <span class="k">return</span> <span class="f">signalStoreFeature</span>(
+    withState&lt;{ status: RequestStatus; error: string | null }&gt;({ status: <span class="s">'idle'</span>, error: null }),
+    <span class="f">withComputed</span>(({ status }) =&gt; ({
+      isLoading: <span class="f">computed</span>(() =&gt; <span class="f">status</span>() === <span class="s">'loading'</span>),
+      isSuccess: <span class="f">computed</span>(() =&gt; <span class="f">status</span>() === <span class="s">'success'</span>),
+      isError: <span class="f">computed</span>(() =&gt; <span class="f">status</span>() === <span class="s">'error'</span>),
+    })),
+    <span class="f">withMethods</span>(store =&gt; ({
+      <span class="f">setLoading</span>() { <span class="f">patchState</span>(store, { status: <span class="s">'loading'</span>, error: null }); },
+      <span class="f">setSuccess</span>() { <span class="f">patchState</span>(store, { status: <span class="s">'success'</span>, error: null }); },
+      <span class="f">setError</span>(error: string) { <span class="f">patchState</span>(store, { status: <span class="s">'error'</span>, error }); },
+    })),
+  );
+}</code></pre></div>
+<p>One <code>status</code> field cannot be <code>loading</code> and <code>error</code> at once, which the three-flag version can. The file is <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/with-request-status.ts">with-request-status.ts</a>, and <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/product-search.store.ts">product-search.store.ts</a> uses it with <code>rxMethod</code>.</p>
+<h2 id="a-feature-that-needs-another-feature">A feature that needs another feature</h2>
+<p>When a feature depends on something the store must already have, say so with <code>type&lt;&gt;()</code> in the first argument. The compiler then rejects the store if the dependency is missing or in the wrong order:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-14" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-14"><span class="k">export</span> function withFilters&lt;F extends Record&lt;string, unknown&gt;&gt;(initial: F) {
+  <span class="k">return</span> <span class="f">signalStoreFeature</span>(
+    { methods: type&lt;{ <span class="f">firstPage</span>(): void }&gt;() },
+    <span class="f">withState</span>({ filters: initial }),
+    <span class="f">withMethods</span>(store =&gt; ({
+      <span class="f">patchFilters</span>(patch: Partial&lt;F&gt;) {
+        <span class="f">patchState</span>(store, s =&gt; ({ filters: { ...s.filters, ...patch } }));
+        store.<span class="f">firstPage</span>();
+      },
+    })),
+  );
+}</code></pre></div>
+<p><code>withFilters</code> needs <code>firstPage()</code>, which <code>withServerPagination()</code> provides, so it must come after it in the store. See <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/with-filters.ts">with-filters.ts</a> and <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/with-server-pagination.ts">with-server-pagination.ts</a>.</p>
+<h2 id="connecting-a-feature-to-a-store-s-own-signals">Connecting a feature to a store's own signals</h2>
+<p>A feature that takes a signal as a parameter is reused with any store that has one. <code>withFeature</code> hands the store to a function that returns the feature:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-15" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-15">function <span class="f">withOrderLabel</span>(orderId: Signal&lt;number&gt;) {
+  <span class="k">return</span> <span class="f">signalStoreFeature</span>(<span class="f">withComputed</span>(() =&gt; ({ label: <span class="f">computed</span>(() =&gt; <span class="s">`Order #${orderId()}`</span>) })));
+}
+
+<span class="k">export</span> <span class="k">const</span> OrderHeaderStore = <span class="f">signalStore</span>(
+  <span class="f">withState</span>({ orderId: 0 }),
+  <span class="f">withFeature</span>(({ orderId }) =&gt; <span class="f">withOrderLabel</span>(orderId)),
+);</code></pre></div>
+<p>This replaces the toolkit's deprecated <code>withFeatureFactory</code>. See <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/order-header.store.ts">order-header.store.ts</a>.</p>
+<h2 id="state-that-follows-other-state">State that follows other state</h2>
+<p><code>withLinkedState</code> adds writable state that is computed from other signals and resets itself when its source changes. Use it instead of an <code>effect</code> that sets state:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-16" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-16"><span class="f">withLinkedState</span>(({ options }) =&gt; ({
+  selectedOption: linkedSignal&lt;Option[], Option | undefined&gt;({
+    source: options,
+    computation: (next, previous) =&gt; next.<span class="f">find</span>(o =&gt; o.id === previous?.value?.id) ?? next[0],
+  }),
+})),</code></pre></div>
+<p>The selection survives a refetch if the option still exists, and falls back to the first one if not. The file is <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/options.store.ts">options.store.ts</a>.</p>
+<p>For a function that reacts to a signal and doesn't need operators, <code>signalMethod</code> is lighter than <code>rxMethod</code>.</p>
+<h2 id="when-stores-must-talk-to-each-other">When stores must talk to each other</h2>
+<p>Stores should not inject each other. When two stores really need to coordinate (a cart that changes when an order is placed), use the events plugin from <code>@ngrx/signals/events</code>. One side dispatches a named event, the other reacts to it, and neither knows the other exists.</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-17" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-17"><span class="k">export</span> <span class="k">const</span> cartEvents = <span class="f">eventGroup</span>({
+  source: <span class="s">'Cart'</span>,
+  events: {
+    added: type&lt;{ sku: string; qty: number }&gt;(),
+    cleared: type&lt;void&gt;(),
+  },
+});
+
+<span class="k">export</span> <span class="k">const</span> CartStore = <span class="f">signalStore</span>(
+  { providedIn: <span class="s">'root'</span> },
+  <span class="f">withState</span>({ lines: {} as Record&lt;string, number&gt; }),
+  <span class="f">withReducer</span>(
+    <span class="f">on</span>(cartEvents.added, ({ payload }, state) =&gt; ({
+      lines: { ...state.lines, [payload.sku]: (state.lines[payload.sku] ?? 0) + payload.qty },
+    })),
+    <span class="f">on</span>(cartEvents.cleared, () =&gt; ({ lines: {} })),
+  ),
+);</code></pre></div>
+<p>A component dispatches with <code>injectDispatch(cartEvents).added({ sku, qty })</code>. See <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/cart-events.ts">cart-events.ts</a> and <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/cart.store.ts">cart.store.ts</a>. This is the replacement for the toolkit's <code>withRedux</code>, and it is the answer to "billing needs something from orders" in <a href="01-architecture.html">01-architecture.md</a>. Use it sparingly: most state is one page's state, and a page's store is enough.</p>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Write a custom <code>signalStoreFeature</code> only after the same block has been copied between stores three times.</li><li>Use one <code>status</code> field (<code>idle | loading | success | error</code>) instead of separate <code>loading</code>, <code>error</code> and <code>loaded</code> flags in <code>rxMethod</code> stores.</li><li>Do not use <code>withRequestStatus</code> with resources or mutations; they already track their own status.</li><li>Declare what a feature needs from the store with <code>type&lt;&gt;()</code> as its first argument so the compiler checks order.</li><li>Connect a reusable feature to a store's own signals with <code>withFeature</code>, not <code>withFeatureFactory</code>.</li><li>Use <code>withLinkedState</code> or <code>linkedSignal</code> for state that follows other state instead of an <code>effect</code> that sets signals.</li><li>Use <code>signalMethod</code> for reactions that need no operators, and <code>rxMethod</code> when they do.</li><li>Never inject one store into another; coordinate stores with <code>@ngrx/signals/events</code> event groups.</li></ol>
+  <pre id="rules-md" hidden>- Write a custom `signalStoreFeature` only after the same block has been copied between stores three times.
+- Use one `status` field (`idle | loading | success | error`) instead of separate `loading`, `error` and `loaded` flags in `rxMethod` stores.
+- Do not use `withRequestStatus` with resources or mutations; they already track their own status.
+- Declare what a feature needs from the store with `type&lt;&gt;()` as its first argument so the compiler checks order.
+- Connect a reusable feature to a store's own signals with `withFeature`, not `withFeatureFactory`.
+- Use `withLinkedState` or `linkedSignal` for state that follows other state instead of an `effect` that sets signals.
+- Use `signalMethod` for reactions that need no operators, and `rxMethod` when they do.
+- Never inject one store into another; coordinate stores with `@ngrx/signals/events` event groups.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="05-toolkit.html" rel="prev"><small>Before</small><span class="pn">05</span><span class="pt">The toolkit</span></a>
+    <a href="07-forms-routing-i18n.html" rel="next"><small>Next</small><span class="pn">07</span><span class="pt">Forms, routing, translations and right-to-left</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+---
+description: Angular Philosophies, Philosophy. Build only what is needed, put each kind of code in one place, and make the right thing the easy thing.
+alwaysApply: true
+---
+
+# Philosophy
+
+- Build only what the current task needs; do not add flags, options or abstractions for hypothetical cases.
+- Prefer the Angular platform (`httpResource`, signal APIs, router, forms) over a new dependency.
+- Write a shared abstraction the third time the same code appears, not the first.
+- When touching a file, fix nearby smells or leave a `TODO` with a reason; never rewrite inside a feature branch.
+- Express every rule a machine can check as a lint rule or a type, not as documentation.
+- Treat accessibility and right-to-left support as part of "done", not as follow-up work.
+
+Full chapter: https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/00-philosophy.md

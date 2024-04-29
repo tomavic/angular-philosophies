@@ -1,0 +1,29 @@
+# Angular Philosophies
+
+> An opinionated guide to writing Angular 22 apps: zoneless and signals, NgRx SignalStore with its toolkit, an Nx workspace divided by business domain, and a spec style built on fakes. Every chapter ends with imperative rules.
+
+## Chapters
+
+- [Philosophy](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/00-philosophy.md): Build only what is needed, put each kind of code in one place, and make the right thing the easy thing.
+- [Architecture](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/01-architecture.md): How the Nx workspace is divided into domains and layers, what may import what, and where new code goes.
+- [Components](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/02-components.md): Standalone, zoneless components with signal APIs, plain templates, and file naming.
+- [The signal store](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/03-signal-store.md): The shape of a SignalStore: facade rule, one store per view, who provides it, state, methods and commands.
+- [Data access](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/04-data-access.md): Reading with httpResource, writing with mutations, interceptors, errors, and what a failed reload keeps.
+- [The toolkit](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/05-toolkit.md): Which @ngrx-toolkit/core extensions to adopt, which to wait for, and which to avoid, plus guarded devtools and storage sync.
+- [Custom store features](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/06-custom-features.md): Writing your own signalStoreFeature, withFeature, withLinkedState, and events between stores.
+- [Forms, routing, translations and right-to-left](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/07-forms-routing-i18n.md): Reactive Forms, lazy routes, Transloco translations, and right-to-left layouts for Arabic.
+- [Accessibility](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/08-accessibility.md): Contrast you measure, keyboard and focus, meaning without colour, names and announcements.
+- [Testing](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/09-testing.md): How to write a spec in seven steps with fakes instead of stubs, and the test toolkit to copy.
+- [Tooling](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/10-tooling.md): pnpm, Nx, strict TypeScript, ESLint, Prettier, commits and hooks.
+- [Using this guide with AI](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/11-using-with-ai.md): Installing the guide as a Claude plugin or skill, AGENTS.md, Cursor rules, llms.txt or an MCP server.
+
+## Code to copy
+
+- [Signal store templates](https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store): a list store with a resource and a mutation, custom features, events, storage sync
+- [Test toolkit](https://github.com/tomavic/angular-philosophies/blob/main/templates/testing): render, fakeService, fakeHttp, fakeRoute, setResource, with specs and examples
+- [Config](https://github.com/tomavic/angular-philosophies/blob/main/templates/config): Prettier, EditorConfig, lint-staged, commitlint, strict tsconfig, Nx module boundaries
+
+## Optional
+
+- [Drop-in AGENTS.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/ai/AGENTS.md): every rule in one file
+- [Full guide in one file](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/ai/llms-full.txt): every chapter, for tools that cannot follow links

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forms, routing, translations and right-to-left | Angular Philosophies</title>
+<meta name="description" content="Reactive Forms, lazy routes, translations, and layouts that flip for Arabic.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Forms, routing, translations and right-to-left | Angular Philosophies">
+<meta property="og:description" content="Reactive Forms, lazy routes, translations, and layouts that flip for Arabic.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/07-forms-routing-i18n.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">07</span>
+    <p class="time"><span>Chapter 07 · Quality</span></p>
+    <h1>Forms, routing, translations and right-to-left</h1>
+    <p class="lead">Reactive Forms, lazy routes, translations, and layouts that flip for Arabic.</p>
+    <p class="ch-facts"><span>14 rules</span><span>3 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/07-forms-routing-i18n.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="flip" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#forms">Forms</a></li><li><a href="#routing">Routing</a></li><li><a href="#translations">Translations</a></li><li><a href="#right-to-left">Right-to-left</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p>The parts of an app that every screen touches: how a form validates, how a route loads, how text is translated, and how the layout flips for Arabic.</p>
+<h2 id="forms">Forms</h2>
+<p><strong>Reactive Forms are the default.</strong> Validators and input directives (digits only, trimmed text, IBAN-shaped, and so on) live in a shared <code>validators</code> and <code>directives</code> library and are written against Reactive Forms, so every form gets them for free.</p>
+<ul><li>A form control is typed: <code>new FormControl('', { nonNullable: true })</code>, never an untyped <code>FormControl(null)</code>.</li><li>Validators are functions in the shared library, named for what they check. Error messages are translation keys keyed by the validator's error name, so the template maps <code>errors</code> to <code>t('errors.' + key)</code> once, in a shared error component.</li><li>A form with unsaved changes extends a small <code>FormDeactivate</code> base and is protected by a <code>canDeactivate</code> guard, so leaving the page asks first.</li><li>Sanitise on the way in, not only on the server: trim text and reject markup that has no business in the field. See the reason check in <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/examples/cancel-order-dialog.component.ts">cancel-order-dialog.component.ts</a>.</li><li>A submit button is disabled while the request is pending and a second click is ignored in code as well, because disabled is a visual state and not a guarantee.</li></ul>
+<p>Angular 22 ships Signal Forms as public API, with parts still marked experimental. They are the likely future of forms. This guide stays on Reactive Forms for now because the shared validators and directives are built on them, and mixing two form systems in one app costs more than either saves. A small new form in a codebase with no such investment may reasonably try Signal Forms.</p>
+<h2 id="routing">Routing</h2>
+<ul><li><strong>Lazy by default.</strong> Every feature is a <code>loadComponent</code> or <code>loadChildren</code>. Only the shell is in the main bundle.</li><li><strong>One routes file per feature</strong>, named <code>&lt;feature&gt;.routes.ts</code>, exporting a <code>Routes</code> array. The app's route table only points at features, it doesn't list their children.</li><li><strong>Bind route data to inputs</strong> with <code>withComponentInputBinding()</code>, so a page declares <code>orderId = input&lt;string&gt;()</code> instead of injecting <code>ActivatedRoute</code>.</li><li><strong>Page titles are translation keys</strong> in the route's <code>title</code>, resolved by a title strategy that translates them.</li><li><strong>Guards are functional and built by factories</strong>: <code>createRoleGuard('manager')</code>, <code>createPermissionGuard(Permission.Refunds)</code>. A factory keeps the rule in the route table where reviewers read it.</li><li><strong>Unauthenticated and authenticated pages sit under different shells</strong>, each with its own layout.</li></ul>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-18" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-18"><span class="k">export</span> <span class="k">const</span> routes: Routes = [
+  {
+    path: <span class="s">'orders'</span>,
+    title: <span class="s">'titles.orders'</span>,
+    canActivate: [authGuard, <span class="f">createRoleGuard</span>(<span class="s">'manager'</span>)],
+    loadChildren: () =&gt; <span class="k">import</span>(<span class="s">'@shop/orders/feature/orders'</span>).<span class="f">then</span>(m =&gt; m.ORDERS_ROUTES),
+  },
+];</code></pre></div>
+<p>Provide <code>withComponentInputBinding()</code> and a preloading strategy in <code>app.config.ts</code>. <code>PreloadAllModules</code> is a fine start for an app of this size; switch to a custom strategy when the bundle list grows.</p>
+<h2 id="translations">Translations</h2>
+<p>The app uses Transloco with one file per language, <code>public/i18n/en.json</code> and <code>public/i18n/ar.json</code>.</p>
+<ul><li><strong>Every key exists in every language file.</strong> A missing Arabic key is a bug caught in review, and the test setup logs it (see <code>provideTestTransloco</code> in <a href="09-testing.html">09-testing.md</a>).</li><li>Keys are camelCase and nested by feature: <code>orders.cancel.reasonRequired</code>.</li><li>A template uses the structural directive once at the top, with a prefix: <code>*transloco="let t; prefix: 'orders.cancel'"</code>.</li><li>Stores, interceptors and services carry <strong>keys</strong>, never translated strings. The template translates.</li><li>A read that depends on language (an <code>Accept-Language</code> header) reads the language signal inside its request, so a language change refetches. See <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/examples/order-details.component.ts">OrderDetailsComponent</a>.</li><li>Format dates and numbers through one helper that takes the language as a parameter, so Arabic digits and calendars are decided in one place, and the helper stays a pure function.</li></ul>
+<h2 id="right-to-left">Right-to-left</h2>
+<p>Arabic is not a translation file, it is a layout. The language store exposes a <code>dir</code> computed, and the root element binds it:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-19" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-19"><span class="c">// layout.store.ts</span>
+<span class="f">withComputed</span>(({ language }) =&gt; ({
+  isRtl: <span class="f">computed</span>(() =&gt; <span class="f">language</span>() === <span class="s">'ar'</span>),
+  dir: <span class="f">computed</span>(() =&gt; (<span class="f">language</span>() === <span class="s">'ar'</span> ? <span class="s">'rtl'</span> : <span class="s">'ltr'</span>)),
+})),</code></pre></div>
+<p>Then write styles so they need no per-language code:</p>
+<ul><li><strong>Use logical properties</strong>, never left and right. With utility classes that is <code>ms-4</code> and <code>pe-2</code> instead of <code>ml-4</code> and <code>pr-2</code>, <code>text-start</code> instead of <code>text-left</code>, <code>start-0</code> instead of <code>left-0</code>.</li><li><strong>Mirror directional icons</strong>: arrows, chevrons, "back" and "next". Icons that carry no direction (a magnifier, a bin) stay.</li><li><strong>Don't mirror</strong> numerals, logos, charts' time axes, phone numbers or code.</li><li><strong>Use a font with Arabic glyphs</strong> as the primary font, not as a fallback, so the two scripts have matching weight and height.</li><li><strong>Test it.</strong> Switch the language in a spec (<code>layout.fake.language.set('ar')</code>) and assert on what changes, and look at every new screen in Arabic once before merging.</li></ul>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Use Reactive Forms as the default; build validators and input directives in a shared library and reuse them.</li><li>Type every form control; use <code>nonNullable</code> controls.</li><li>Make validator error messages translation keys keyed by the error name.</li><li>Protect forms with unsaved changes with a <code>canDeactivate</code> guard.</li><li>Trim and reject unwanted markup in form input in code, and ignore a second submit while a request is pending.</li><li>Lazy-load every feature with <code>loadComponent</code> or <code>loadChildren</code>; keep one <code>&lt;feature&gt;.routes.ts</code> per feature.</li><li>Use <code>withComponentInputBinding()</code> and read route values through <code>input()</code>, not <code>ActivatedRoute</code>.</li><li>Put translation keys in route <code>title</code>; build guards with factory functions such as <code>createRoleGuard</code>.</li><li>Provide an entry for every key in every language file; keep keys camelCase and nested by feature.</li><li>Carry translation keys in stores, interceptors and services; translate only in templates.</li><li>Read the language signal inside a request that depends on language so it refetches on change.</li><li>Expose a <code>dir</code> computed from the language store and bind it on the root element.</li><li>Use logical properties (<code>ms-*</code>, <code>pe-*</code>, <code>text-start</code>, <code>start-*</code>), never physical left and right.</li><li>Mirror directional icons in right-to-left; do not mirror numerals, logos or code.</li></ol>
+  <pre id="rules-md" hidden>- Use Reactive Forms as the default; build validators and input directives in a shared library and reuse them.
+- Type every form control; use `nonNullable` controls.
+- Make validator error messages translation keys keyed by the error name.
+- Protect forms with unsaved changes with a `canDeactivate` guard.
+- Trim and reject unwanted markup in form input in code, and ignore a second submit while a request is pending.
+- Lazy-load every feature with `loadComponent` or `loadChildren`; keep one `&lt;feature&gt;.routes.ts` per feature.
+- Use `withComponentInputBinding()` and read route values through `input()`, not `ActivatedRoute`.
+- Put translation keys in route `title`; build guards with factory functions such as `createRoleGuard`.
+- Provide an entry for every key in every language file; keep keys camelCase and nested by feature.
+- Carry translation keys in stores, interceptors and services; translate only in templates.
+- Read the language signal inside a request that depends on language so it refetches on change.
+- Expose a `dir` computed from the language store and bind it on the root element.
+- Use logical properties (`ms-*`, `pe-*`, `text-start`, `start-*`), never physical left and right.
+- Mirror directional icons in right-to-left; do not mirror numerals, logos or code.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="06-custom-features.html" rel="prev"><small>Before</small><span class="pn">06</span><span class="pt">Custom store features</span></a>
+    <a href="08-accessibility.html" rel="next"><small>Next</small><span class="pn">08</span><span class="pt">Accessibility</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

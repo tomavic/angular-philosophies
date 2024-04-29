@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture | Angular Philosophies</title>
+<meta name="description" content="How the workspace is divided into domains and layers, what may import what, and where new code goes.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Architecture | Angular Philosophies">
+<meta property="og:description" content="How the workspace is divided into domains and layers, what may import what, and where new code goes.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/01-architecture.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">01</span>
+    <p class="time"><span>Chapter 01 · Structure</span></p>
+    <h1>Architecture</h1>
+    <p class="lead">How the workspace is divided into domains and layers, what may import what, and where new code goes.</p>
+    <p class="ch-facts"><span>11 rules</span><span>4 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/01-architecture.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="layers" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#the-workspace">The workspace</a></li><li><a href="#tags-two-per-library">Tags: two per library</a></li><li><a href="#dependencies-flow-down">Dependencies flow down</a></li><li><a href="#where-does-new-code-go">Where does new code go</a></li><li><a href="#entry-points-and-public-apis">Entry points and public APIs</a></li><li><a href="#naming">Naming</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p>A large Angular app stays maintainable when it is cut into domains and layers that a tool, not a person, keeps in order. The examples use a small shop with two business domains, <code>orders</code> and <code>billing</code>, plus <code>shared</code> code.</p>
+<h2 id="the-workspace">The workspace</h2>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-1" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-1">apps/
+  storefront/                  the Angular app: routes, providers, one folder per feature
+libs/
+  orders/                      scope:orders
+    data-access/               stores and API services          type:data-access
+    feature/checkout/          a full page with its own store   type:feature
+    ui/                        presentational components        type:ui
+    util/                      pure functions                   type:util
+  billing/                     scope:billing, same layout
+  shared/                      scope:shared: nothing business-specific lives here
+    ui/  util/  core/  testing/</code></pre></div>
+<p>Libraries are split by <strong>type</strong> inside a <strong>domain</strong>. A new business concept gets a domain folder; it does not get a new top-level layout.</p>
+<h2 id="tags-two-per-library">Tags: two per library</h2>
+<p>Every library has exactly one <code>scope</code> tag (who owns it) and one <code>type</code> tag (what kind of code it is), set in its <code>project.json</code>:</p>
+<div class="table-wrap"><table><thead><tr><th>Tag</th><th>Meaning</th></tr></thead><tbody><tr><td data-label="Tag"><code>scope:orders</code>, <code>scope:billing</code></td><td data-label="Meaning">Belongs to that business domain</td></tr><tr><td data-label="Tag"><code>scope:shared</code></td><td data-label="Meaning">Generic, usable by any domain, never imports a domain</td></tr><tr><td data-label="Tag"><code>scope:app</code></td><td data-label="Meaning">An application, which may use every scope</td></tr><tr><td data-label="Tag"><code>type:util</code></td><td data-label="Meaning">Pure functions. No Angular injection, no services</td></tr><tr><td data-label="Tag"><code>type:data-access</code></td><td data-label="Meaning">Signal stores and HTTP services</td></tr><tr><td data-label="Tag"><code>type:core</code></td><td data-label="Meaning">Angular infrastructure: providers, interceptors, guards, models</td></tr><tr><td data-label="Tag"><code>type:ui</code></td><td data-label="Meaning">Presentational components: inputs and outputs only</td></tr><tr><td data-label="Tag"><code>type:feature</code></td><td data-label="Meaning">Smart components: a routed page with its own store</td></tr><tr><td data-label="Tag"><code>type:shell</code></td><td data-label="Meaning">The layout that mounts features, used only by an app</td></tr><tr><td data-label="Tag"><code>type:testing</code></td><td data-label="Meaning">Test helpers, imported by specs only</td></tr></tbody></table></div>
+<h2 id="dependencies-flow-down">Dependencies flow down</h2>
+<p>A library may import only from the layers below it. <code>@nx/enforce-module-boundaries</code> turns that into a build error, so nobody has to remember it.</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-2" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-2">type:shell        mounts features, used only by an app
+type:feature      pages
+type:ui           presentational components
+type:core         providers, interceptors, guards, models
+type:data-access  stores, API services
+type:util         pure functions</code></pre></div>
+<p>Scope follows the same logic: a domain may import itself and <code>shared</code>, <code>shared</code> imports only <code>shared</code>, and a domain never imports another domain. If <code>billing</code> needs something from <code>orders</code>, it is either shared code in the wrong place or a sign the two should talk through an event (see <a href="06-custom-features.html">06-custom-features.md</a>). The complete lint configuration is in <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/config/eslint.boundaries.js">templates/config/eslint.boundaries.js</a>.</p>
+<p>Two details come from running this in production:</p>
+<ul><li><code>type:data-access</code> may import <code>type:core</code>, because stores need the HTTP configuration and error types. The reverse is forbidden: core never imports a store.</li><li><code>util</code> libraries accept what they need as parameters. A date helper takes the language as an argument instead of injecting a language service, which keeps it testable without Angular.</li></ul>
+<h2 id="where-does-new-code-go">Where does new code go</h2>
+<div class="table-wrap"><table><thead><tr><th>You are adding</th><th>Put it in</th></tr></thead><tbody><tr><td data-label="You are adding">A store or API service for a domain</td><td data-label="Put it in"><code>libs/&lt;domain&gt;/data-access</code></td></tr><tr><td data-label="You are adding">A page with its own store</td><td data-label="Put it in"><code>libs/&lt;domain&gt;/feature/&lt;name&gt;</code></td></tr><tr><td data-label="You are adding">A component two features reuse</td><td data-label="Put it in"><code>libs/&lt;domain&gt;/ui</code>, or <code>libs/shared/ui</code> if it knows no domain</td></tr><tr><td data-label="You are adding">A type shared across libs</td><td data-label="Put it in"><code>libs/shared/core</code> (models)</td></tr><tr><td data-label="You are adding">An HTTP interceptor</td><td data-label="Put it in"><code>libs/shared/core</code>, in an <code>interceptors</code> entry point</td></tr><tr><td data-label="You are adding">A route guard</td><td data-label="Put it in"><code>libs/shared/core</code> for generic ones, the domain's <code>data-access</code> for domain ones</td></tr><tr><td data-label="You are adding">A pure date, string or number helper</td><td data-label="Put it in"><code>libs/shared/util</code></td></tr><tr><td data-label="You are adding">A test helper</td><td data-label="Put it in"><code>libs/shared/testing</code></td></tr><tr><td data-label="You are adding">Code used by one feature only</td><td data-label="Put it in"><strong>Inside that feature.</strong> Do not create a library yet</td></tr></tbody></table></div>
+<p>The last row matters most. <strong>Code stays in the app until a second consumer appears, then it is promoted to a library.</strong> Promoting early produces libraries with one user and a public API nobody needed.</p>
+<h2 id="entry-points-and-public-apis">Entry points and public APIs</h2>
+<p>Split a library with Angular secondary entry points when it holds distinct parts (<code>@shop/shared/core/models</code>, <code>@shop/shared/core/interceptors</code>), not with more libraries. Each entry has its own <code>index.ts</code>, and:</p>
+<ul><li>Export by name. Do not <code>export *</code> runtime code, only types, so the public surface stays deliberate.</li><li>Import through the path alias (<code>@shop/orders/data-access</code>), never through a relative <code>../../</code> path.</li><li>Inside the app, <code>@/*</code> points at <code>src/app/*</code>, so a feature imports its neighbours the same way.</li></ul>
+<p>Nx boundaries only apply between projects, not between entry points inside one project. When two entries of one library must never import each other, add a <code>no-restricted-imports</code> rule to that library's own ESLint config. A guest checkout and a signed-in checkout inside one <code>checkout</code> library are the typical case: they share a domain and must not share code that depends on a session.</p>
+<p>When both sides need the same piece, choose in this order:</p>
+<ol><li><strong>Reuse</strong> what does not depend on the session or the domain: <code>shared/ui</code>, <code>shared/util</code>.</li><li><strong>Promote, then reuse</strong> when it can work through inputs and outputs only, with no store and no session.</li><li><strong>Duplicate</strong> when sharing it would need an <code>if (guest)</code> flag. Two small copies that can change independently are cheaper than one function with a mode switch.</li></ol>
+<h2 id="naming">Naming</h2>
+<div class="table-wrap"><table><thead><tr><th>Thing</th><th>Convention</th><th>Example</th></tr></thead><tbody><tr><td data-label="Thing">Nx project</td><td data-label="Convention"><code>&lt;scope&gt;-&lt;type&gt;-&lt;name&gt;</code></td><td data-label="Example"><code>orders-data-access</code></td></tr><tr><td data-label="Thing">Path alias</td><td data-label="Convention"><code>@&lt;workspace&gt;/&lt;scope&gt;/&lt;type&gt;</code></td><td data-label="Example"><code>@shop/orders/data-access</code></td></tr><tr><td data-label="Thing">Component file</td><td data-label="Convention"><code>&lt;name&gt;.component.ts</code> + <code>.component.html</code></td><td data-label="Example"><code>order-list.component.ts</code></td></tr><tr><td data-label="Thing">Store, service, model</td><td data-label="Convention"><code>&lt;name&gt;.store.ts</code>, <code>.service.ts</code>, <code>.model.ts</code></td><td data-label="Example"><code>order-list.store.ts</code></td></tr><tr><td data-label="Thing">Routes, guard</td><td data-label="Convention"><code>&lt;feature&gt;.routes.ts</code>, <code>&lt;name&gt;.guard.ts</code></td><td data-label="Example"><code>checkout.routes.ts</code></td></tr><tr><td data-label="Thing">Spec</td><td data-label="Convention">beside its source, <code>&lt;file&gt;.spec.ts</code></td><td data-label="Example"><code>order-list.store.spec.ts</code></td></tr><tr><td data-label="Thing">Selector</td><td data-label="Convention"><code>app-</code> prefix, kebab-case</td><td data-label="Example"><code>app-order-list</code></td></tr></tbody></table></div>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Give every library exactly one <code>scope:*</code> tag and one <code>type:*</code> tag in its <code>project.json</code>.</li><li>Enforce module boundaries with <code>@nx/enforce-module-boundaries</code>; dependencies flow only downward through util, data-access, core, ui, feature, shell.</li><li>Never let a domain import another domain, and never let <code>scope:shared</code> import a domain.</li><li>Keep code inside the app feature until a second consumer exists; then promote it to a library.</li><li>Split a library with secondary entry points, not with extra libraries.</li><li>Export by name from each <code>index.ts</code>; do not <code>export *</code> runtime code.</li><li>Import through path aliases (<code>@shop/...</code>, <code>@/...</code>); never use <code>../../</code> across feature or library boundaries.</li><li>Make <code>type:util</code> code free of Angular injection; pass language and configuration as parameters.</li><li>Forbid sibling entry points from importing each other with <code>no-restricted-imports</code> in the library's own ESLint config.</li><li>Duplicate small code instead of adding an <code>if (guest)</code>-style mode flag to a shared function.</li><li>Name files <code>&lt;name&gt;.component.ts</code>, <code>&lt;name&gt;.store.ts</code>, <code>&lt;name&gt;.service.ts</code>, <code>&lt;name&gt;.model.ts</code>, <code>&lt;feature&gt;.routes.ts</code>, and keep each spec beside its source.</li></ol>
+  <pre id="rules-md" hidden>- Give every library exactly one `scope:*` tag and one `type:*` tag in its `project.json`.
+- Enforce module boundaries with `@nx/enforce-module-boundaries`; dependencies flow only downward through util, data-access, core, ui, feature, shell.
+- Never let a domain import another domain, and never let `scope:shared` import a domain.
+- Keep code inside the app feature until a second consumer exists; then promote it to a library.
+- Split a library with secondary entry points, not with extra libraries.
+- Export by name from each `index.ts`; do not `export *` runtime code.
+- Import through path aliases (`@shop/...`, `@/...`); never use `../../` across feature or library boundaries.
+- Make `type:util` code free of Angular injection; pass language and configuration as parameters.
+- Forbid sibling entry points from importing each other with `no-restricted-imports` in the library's own ESLint config.
+- Duplicate small code instead of adding an `if (guest)`-style mode flag to a shared function.
+- Name files `&lt;name&gt;.component.ts`, `&lt;name&gt;.store.ts`, `&lt;name&gt;.service.ts`, `&lt;name&gt;.model.ts`, `&lt;feature&gt;.routes.ts`, and keep each spec beside its source.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="00-philosophy.html" rel="prev"><small>Before</small><span class="pn">00</span><span class="pt">Philosophy</span></a>
+    <a href="02-components.html" rel="next"><small>Next</small><span class="pn">02</span><span class="pt">Components</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

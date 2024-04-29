@@ -1,0 +1,11 @@
+{
+  "name": "angular-philosophies-mcp",
+  "version": "2.0.0",
+  "private": true,
+  "description": "MCP server that serves the Angular Philosophies guide chapter by chapter.",
+  "type": "module",
+  "bin": { "angular-philosophies-mcp": "./server.mjs" },
+  "files": ["server.mjs", "data.json"],
+  "engines": { "node": ">=22" },
+  "license": "MIT"
+}

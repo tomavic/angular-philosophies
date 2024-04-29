@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The toolkit | Angular Philosophies</title>
+<meta name="description" content="Which toolkit extensions to adopt, which to wait for, and which to avoid.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The toolkit | Angular Philosophies">
+<meta property="og:description" content="Which toolkit extensions to adopt, which to wait for, and which to avoid.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/05-toolkit.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">05</span>
+    <p class="time"><span>Chapter 05 · State</span></p>
+    <h1>The toolkit</h1>
+    <p class="lead">Which toolkit extensions to adopt, which to wait for, and which to avoid.</p>
+    <p class="ch-facts"><span>8 rules</span><span>3 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/05-toolkit.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="toolkit" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#install">Install</a></li><li><a href="#inventory">Inventory</a></li><li><a href="#devtools-never-raw">Devtools, never raw</a></li><li><a href="#storage-sync">Storage sync</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p><code>@ngrx-toolkit/core</code> adds extensions on top of <code>@ngrx/signals</code>: resources, mutations, devtools, storage sync and more. It ships more than most features need, and every extension is a thing a reader has to learn. This chapter says what is adopted, what is available but not yet needed, and what to avoid.</p>
+<h2 id="install">Install</h2>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">bash</span><button type="button" class="copy" data-copy="code-10" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-10">pnpm add @ngrx/signals @ngrx-toolkit/core</code></pre></div>
+<p>Starting with version 22 the package is <strong><code>@ngrx-toolkit/core</code></strong>. Version 21 and earlier were published as <code>@angular-architects/ngrx-toolkit</code>. Match its major to your Angular major; v22 needs <code>@angular/core</code> 22, <code>@ngrx/signals</code> 22 and <code>@ngrx/store</code> 22 as peers.</p>
+<h2 id="inventory">Inventory</h2>
+<p><strong>Adopted.</strong> These are part of the standard store:</p>
+<div class="table-wrap"><table><thead><tr><th>Extension</th><th>Use</th></tr></thead><tbody><tr><td data-label="Extension"><code>withResource</code></td><td data-label="Use">Reads, derived from state. See <a href="04-data-access.html">04-data-access.md</a></td></tr><tr><td data-label="Extension"><code>withMutations</code>, <code>httpMutation</code></td><td data-label="Use">Writes. <code>rxMutation</code> for a write that is not a plain HTTP call</td></tr><tr><td data-label="Extension"><code>withDevtools</code>, <code>withDevToolsStub</code></td><td data-label="Use">Only through <code>guardedDevtools</code>, below</td></tr><tr><td data-label="Extension"><code>withMapper</code></td><td data-label="Use">Redacting sensitive keys before they reach devtools</td></tr><tr><td data-label="Extension"><code>withStorageSync</code></td><td data-label="Use">Persisting part of a store to <code>localStorage</code> or <code>sessionStorage</code></td></tr></tbody></table></div>
+<p><strong>Available, add when a real need shows up.</strong> Don't add these speculatively:</p>
+<div class="table-wrap"><table><thead><tr><th>Extension</th><th>Add it when</th></tr></thead><tbody><tr><td data-label="Extension"><code>withImmutableState</code></td><td data-label="Add it when">A store mutated outside <code>patchState</code> caused a real bug. It throws in dev mode on such a mutation</td></tr><tr><td data-label="Extension"><code>withReset</code></td><td data-label="Add it when">A store needs a <code>resetState()</code> and the hand-written <code>reset()</code> has become repetitive</td></tr><tr><td data-label="Extension"><code>withConditional</code></td><td data-label="Add it when">You must swap between two feature sets of the same shape by a condition</td></tr><tr><td data-label="Extension"><code>withUndoRedo</code></td><td data-label="Add it when">A screen offers undo and redo</td></tr><tr><td data-label="Extension"><code>withCallState</code></td><td data-label="Add it when">A store is built on <code>rxMethod</code> and repeats <code>loading</code> and <code>error</code> flags. Resources and mutations already track their own status. See <a href="06-custom-features.html">06-custom-features.md</a> for a smaller version</td></tr></tbody></table></div>
+<p><strong>Leave alone.</strong> These solve a shape of problem this guide avoids:</p>
+<div class="table-wrap"><table><thead><tr><th>Extension</th><th>Why not</th></tr></thead><tbody><tr><td data-label="Extension"><code>withDataService</code>, <code>withEntityResources</code></td><td data-label="Why not">Both assume the endpoint returns a bare array. A paginated envelope (<code>{ items, total }</code>) doesn't fit; use <code>withResource</code></td></tr><tr><td data-label="Extension"><code>withPagination</code></td><td data-label="Why not">Client-side paging of a collection that is already loaded. Server-side paging doesn't need it</td></tr><tr><td data-label="Extension"><code>withRedux</code>, <code>createEffects</code></td><td data-label="Why not">A reducer and effects layer that this guide's facade rule exists to avoid. The toolkit's own docs mark <code>createEffects</code> deprecated in favour of <code>@ngrx/signals/events</code>. See <a href="06-custom-features.html">06-custom-features.md</a></td></tr><tr><td data-label="Extension"><code>withFeatureFactory</code></td><td data-label="Why not">Deprecated. Use <code>withFeature</code> from <code>@ngrx/signals</code></td></tr><tr><td data-label="Extension"><code>patchState</code> from the toolkit</td><td data-label="Why not">Deprecated alias of <code>updateState</code>. Use <code>patchState</code> from <code>@ngrx/signals</code></td></tr></tbody></table></div>
+<p>If you add an extension that is not marked adopted, update this table in the same change. The inventory is what stops the toolkit from slowly becoming the whole architecture.</p>
+<h2 id="devtools-never-raw">Devtools, never raw</h2>
+<p><code>withDevtools</code> connects to the Redux DevTools browser extension unconditionally. It does not check <code>isDevMode()</code>. A raw <code>withDevtools()</code> call therefore ships to production, where anyone with the extension installed can read that store's state. Every store goes through one wrapper:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-11" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-11"><span class="k">import</span> { isDevMode } <span class="k">from</span> <span class="s">'@angular/core'</span>;
+<span class="k">import</span> { DevtoolsFeature, withDevToolsStub, withDevtools } <span class="k">from</span> <span class="s">'@ngrx-toolkit/core'</span>;
+
+<span class="k">export</span> function <span class="f">guardedDevtools</span>(name: string, ...features: DevtoolsFeature[]) {
+  <span class="k">return</span> <span class="f">isDevMode</span>() ? <span class="f">withDevtools</span>(name, ...features) : <span class="f">withDevToolsStub</span>(name, ...features);
+}</code></pre></div>
+<p><code>withDevToolsStub</code> is the toolkit's own mechanism for this: it never touches the devtools connection. Keep one copy of the wrapper in a shared <code>util</code> or <code>core</code> library, and grep for <code>withDevtools(</code> before merging. It should only appear inside that file. The file is <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/guarded-devtools.ts">guarded-devtools.ts</a>.</p>
+<p>When a store's tracked state holds a full entity row, also pass <code>withMapper</code> and redact any password-, token- or secret-shaped key before it reaches devtools. That is defence in depth on top of the server not sending those fields. A store that holds only ids, names and counts has nothing to mask, so don't add one.</p>
+<h2 id="storage-sync">Storage sync</h2>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-12" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-12"><span class="f">withStorageSync</span>({
+  key: <span class="s">'app-layout'</span>,
+  select: ({ theme, language }) =&gt; ({ theme, language }), <span class="c">// persist only what should survive a reload</span>
+}),</code></pre></div>
+<p>Place it right after <code>withState</code>. By default it reads on init and writes on every state change, so methods that used to call <code>localStorage.setItem</code> after <code>patchState</code> simply drop that call. <code>select</code> keeps transient state such as <code>sidebarCollapsed</code> out of storage. See <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/layout.store.ts">layout.store.ts</a>.</p>
+<p>Guard any direct <code>window</code> access for server rendering. Storage sync handles that for you, hand-written code doesn't.</p>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Install <code>@ngrx-toolkit/core</code> for Angular 22 (<code>@angular-architects/ngrx-toolkit</code> for 21 and earlier), with the same major as Angular.</li><li>Use <code>withResource</code>, <code>withMutations</code>/<code>httpMutation</code>, <code>guardedDevtools</code>, <code>withMapper</code> and <code>withStorageSync</code> as the standard extensions.</li><li>Add <code>withImmutableState</code>, <code>withReset</code>, <code>withConditional</code>, <code>withUndoRedo</code> or <code>withCallState</code> only when a real need appears, and update the inventory in the same change.</li><li>Do not use <code>withDataService</code>, <code>withEntityResources</code>, <code>withPagination</code>, <code>withRedux</code>, <code>createEffects</code> or <code>withFeatureFactory</code>.</li><li>Use <code>withFeature</code> from <code>@ngrx/signals</code> instead of <code>withFeatureFactory</code>, and <code>patchState</code> from <code>@ngrx/signals</code> instead of the toolkit's.</li><li>Never call <code>withDevtools</code> directly; call <code>guardedDevtools(name, ...)</code> from one shared file.</li><li>Add <code>withMapper</code> to redact secret-shaped keys when a store's tracked state holds a full entity row.</li><li>Persist state with <code>withStorageSync</code> and a <code>select</code> that lists only what should survive a reload; place it right after <code>withState</code>.</li></ol>
+  <pre id="rules-md" hidden>- Install `@ngrx-toolkit/core` for Angular 22 (`@angular-architects/ngrx-toolkit` for 21 and earlier), with the same major as Angular.
+- Use `withResource`, `withMutations`/`httpMutation`, `guardedDevtools`, `withMapper` and `withStorageSync` as the standard extensions.
+- Add `withImmutableState`, `withReset`, `withConditional`, `withUndoRedo` or `withCallState` only when a real need appears, and update the inventory in the same change.
+- Do not use `withDataService`, `withEntityResources`, `withPagination`, `withRedux`, `createEffects` or `withFeatureFactory`.
+- Use `withFeature` from `@ngrx/signals` instead of `withFeatureFactory`, and `patchState` from `@ngrx/signals` instead of the toolkit's.
+- Never call `withDevtools` directly; call `guardedDevtools(name, ...)` from one shared file.
+- Add `withMapper` to redact secret-shaped keys when a store's tracked state holds a full entity row.
+- Persist state with `withStorageSync` and a `select` that lists only what should survive a reload; place it right after `withState`.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="04-data-access.html" rel="prev"><small>Before</small><span class="pn">04</span><span class="pt">Data access</span></a>
+    <a href="06-custom-features.html" rel="next"><small>Next</small><span class="pn">06</span><span class="pt">Custom store features</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

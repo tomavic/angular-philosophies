@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The signal store | Angular Philosophies</title>
+<meta name="description" content="The shape of a store: the facade rule, one store per view, who provides it.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The signal store | Angular Philosophies">
+<meta property="og:description" content="The shape of a store: the facade rule, one store per view, who provides it.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/03-signal-store.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">03</span>
+    <p class="time"><span>Chapter 03 · State</span></p>
+    <h1>The signal store</h1>
+    <p class="lead">The shape of a store: the facade rule, one store per view, who provides it.</p>
+    <p class="ch-facts"><span>15 rules</span><span>3 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/03-signal-store.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="store" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#the-rule">The rule</a></li><li><a href="#one-store-per-view">One store per view</a></li><li><a href="#the-shape-of-a-store">The shape of a store</a></li><li><a href="#commands-that-are-not-plain-requests">Commands that are not plain requests</a></li><li><a href="#state-that-survives-a-reload">State that survives a reload</a></li><li><a href="#testing-a-store">Testing a store</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p>NgRx SignalStore is the centre of this guide. It gives a page one object with its state, its derived values, its API calls and its actions, built from small features that compose. Everything here targets <code>@ngrx/signals</code> 22.</p>
+<h2 id="the-rule">The rule</h2>
+<p><strong>A <code>signalStore</code> is the facade, the API layer and the state layer for its slice.</strong> It is not a plain service next to a store next to some <code>.subscribe()</code> wiring. From that follow three consequences:</p>
+<ul><li>Components inject a store and read signals. They never inject <code>HttpClient</code> or a data service.</li><li>Components never <code>.subscribe()</code>. Anything reactive is a signal, a resource or an <code>rxMethod</code>.</li><li>Components never call a <code>load()</code> method after a filter changes. Reads are resources derived from state, so changing the filter signal changes the request. See <a href="04-data-access.html">04-data-access.md</a>.</li></ul>
+<h2 id="one-store-per-view">One store per view</h2>
+<p>When a feature has a list, a detail page and a form, each page gets its own store:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-4" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-4">orders/
+  order.model.ts          types and static option lists. No store, no injection
+  order.store.ts          feature store: reference data every view needs, providedIn: <span class="s">'root'</span>
+  order-list/
+    order-list.store.ts   view store, provided by the component
+    order-list.component.ts
+    order-list.component.html
+  order-form/
+    order-form.store.ts   view store, provided by the component
+    ...</code></pre></div>
+<p>Do not merge list state and form state because they belong to the same feature. Each view owns its filters, paging, dialog state and its own reads and writes.</p>
+<div class="table-wrap"><table><thead><tr><th>Store</th><th>Provided</th><th>Why</th></tr></thead><tbody><tr><td data-label="Store">Feature store (reference data, lookups)</td><td data-label="Provided"><code>{ providedIn: 'root' }</code></td><td data-label="Why">Stable for the session and shared by every view, so it is fetched once</td></tr><tr><td data-label="Store">View store (list, detail, form)</td><td data-label="Provided"><code>providers: [OrderListStore]</code> on the component</td><td data-label="Why">Filters, paging and dialog state must reset when the user leaves, not leak into the next visit</td></tr><tr><td data-label="Store">Cross-feature state (auth, layout)</td><td data-label="Provided">a library store, <code>providedIn: 'root'</code></td><td data-label="Why">Owned by a library, never by one feature</td></tr></tbody></table></div>
+<p>State shared by two features belongs in a library store. A feature must never reach into another feature's store.</p>
+<h2 id="the-shape-of-a-store">The shape of a store</h2>
+<p>The full file is <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/order-list.store.ts">templates/signal-store/order-list.store.ts</a>. The skeleton:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-5" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-5"><span class="k">interface</span> OrderListState {
+  page: number;
+  search: string;
+  status: OrderStatus | null;
+}
+
+<span class="k">const</span> initialState: OrderListState = { page: 1, search: <span class="s">''</span>, status: null };
+
+<span class="k">export</span> <span class="k">const</span> OrderListStore = <span class="f">signalStore</span>(
+  <span class="f">guardedDevtools</span>(<span class="s">'orderList'</span>),
+  <span class="f">withState</span>(initialState),
+  <span class="f">withProps</span>(...),       <span class="c">// injected services, debounced signals, private helpers</span>
+  <span class="f">withResource</span>(...),    <span class="c">// reads</span>
+  <span class="f">withMutations</span>(...),   <span class="c">// writes</span>
+  <span class="f">withComputed</span>(...),    <span class="c">// derived values</span>
+  <span class="f">withMethods</span>(...),     <span class="c">// actions</span>
+);</code></pre></div>
+<p>The order is deliberate. Each feature can use what the ones above it added, so state comes first and methods last.</p>
+<ul><li><strong>Type the state</strong> with an interface and name the starting value <code>initialState</code>. A store that outlives its page also exposes <code>reset()</code>, which is <code>patchState(store, initialState)</code>.</li><li><strong>Change state only with <code>patchState</code>.</strong> Never mutate an array or an object in place; replace it.</li><li><strong>Put derived values in <code>withComputed</code></strong>, not in methods and not in the template.</li><li><strong>Inject with <code>inject()</code> inside <code>withProps</code>, <code>withMethods</code> or <code>withHooks</code>.</strong> A store has no constructor.</li><li><strong>Prefix private members with <code>_</code>.</strong> Underscore-prefixed state, props and methods are not exposed on the store instance, so <code>_debouncedSearch</code> and <code>_listReload</code> stay inside the store. Expose a deliberate method (<code>refresh()</code>) when callers need it.</li><li><strong>Reset the page when a filter changes.</strong> Every filter setter patches <code>page: 1</code> in the same call, because a filter applied on page 5 can leave you past the last page.</li><li><strong>Never type a store as <code>any</code>.</strong> If declaration emit complains in a library, export an interface for the public surface.</li></ul>
+<h2 id="commands-that-are-not-plain-requests">Commands that are not plain requests</h2>
+<p>A search that must not overlap itself, or a command with several steps, is better as an <code>rxMethod</code>:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-6" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-6">search: rxMethod&lt;string&gt;(
+  <span class="f">pipe</span>(
+    <span class="f">tap</span>(() =&gt; store.<span class="f">setLoading</span>()),
+    <span class="f">exhaustMap</span>(q =&gt;
+      http.get&lt;Page&lt;Product&gt;&gt;(<span class="s">'/api/products'</span>, { params: { q } }).<span class="f">pipe</span>(
+        <span class="f">tapResponse</span>({
+          next: ({ items }) =&gt; <span class="f">patchState</span>(store, { products: items }),
+          error: () =&gt; store.<span class="f">setError</span>(<span class="s">'search-failed'</span>),
+        }),
+      ),
+    ),
+  ),
+),</code></pre></div>
+<p>Choose the flattening operator on purpose: <code>switchMap</code> for a search where only the latest matters, <code>exhaustMap</code> for a submit that must not run twice, <code>concatMap</code> when order matters. The complete store is <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/product-search.store.ts">product-search.store.ts</a>. It also shows <code>setLoading</code> and <code>setError</code>, which come from the custom feature in <a href="06-custom-features.html">06-custom-features.md</a>.</p>
+<p>Reach for <code>rxMethod</code> when you need operators. A request derived from state is a resource, and a plain command is a mutation.</p>
+<h2 id="state-that-survives-a-reload">State that survives a reload</h2>
+<p>Persist with <code>withStorageSync</code>, never with hand-written <code>localStorage.getItem</code> calls. See <a href="05-toolkit.html">05-toolkit.md</a> and <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/layout.store.ts">layout.store.ts</a>, which persists only the theme and the language and leaves <code>sidebarCollapsed</code> alone.</p>
+<h2 id="testing-a-store">Testing a store</h2>
+<p>A store spec injects the store with a fake <code>HttpClient</code>, drives it through its public methods and asserts on its signals. The complete example is <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/examples/order-list.store.spec.ts">order-list.store.spec.ts</a>, and <a href="09-testing.html">09-testing.md</a> explains the toolkit it uses. Every store gets a spec.</p>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Make a <code>signalStore</code> the facade, API layer and state layer for its slice; components never inject <code>HttpClient</code> or a data service.</li><li>Never call <code>.subscribe()</code> in a component; use signals, resources or <code>rxMethod</code>.</li><li>Never add a <code>load()</code> method that a component must call after a filter changes; derive reads from state with resources.</li><li>Use one store per view (list, detail, form), provided by the component with <code>providers: [XStore]</code>.</li><li>Provide a feature store for shared reference data with <code>{ providedIn: 'root' }</code>; put cross-feature state in a library store.</li><li>Never let a feature import another feature's store.</li><li>Type state with an interface, name the starting value <code>initialState</code>, and expose <code>reset()</code> when the store outlives its page.</li><li>Change state only with <code>patchState</code>; never mutate arrays or objects in place.</li><li>Put derived values in <code>withComputed</code>; inject dependencies with <code>inject()</code> inside <code>withProps</code>, <code>withMethods</code> or <code>withHooks</code>.</li><li>Prefix private store members with <code>_</code> and expose a deliberate method when callers need them.</li><li>Reset <code>page</code> to 1 in every filter setter.</li><li>Never type a store as <code>any</code>.</li><li>Use <code>rxMethod</code> only when operators are needed; choose <code>switchMap</code>, <code>exhaustMap</code> or <code>concatMap</code> deliberately.</li><li>Persist state with <code>withStorageSync</code>, never with hand-written <code>localStorage</code> calls.</li><li>Give every store a spec.</li></ol>
+  <pre id="rules-md" hidden>- Make a `signalStore` the facade, API layer and state layer for its slice; components never inject `HttpClient` or a data service.
+- Never call `.subscribe()` in a component; use signals, resources or `rxMethod`.
+- Never add a `load()` method that a component must call after a filter changes; derive reads from state with resources.
+- Use one store per view (list, detail, form), provided by the component with `providers: [XStore]`.
+- Provide a feature store for shared reference data with `{ providedIn: 'root' }`; put cross-feature state in a library store.
+- Never let a feature import another feature's store.
+- Type state with an interface, name the starting value `initialState`, and expose `reset()` when the store outlives its page.
+- Change state only with `patchState`; never mutate arrays or objects in place.
+- Put derived values in `withComputed`; inject dependencies with `inject()` inside `withProps`, `withMethods` or `withHooks`.
+- Prefix private store members with `_` and expose a deliberate method when callers need them.
+- Reset `page` to 1 in every filter setter.
+- Never type a store as `any`.
+- Use `rxMethod` only when operators are needed; choose `switchMap`, `exhaustMap` or `concatMap` deliberately.
+- Persist state with `withStorageSync`, never with hand-written `localStorage` calls.
+- Give every store a spec.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="02-components.html" rel="prev"><small>Before</small><span class="pn">02</span><span class="pt">Components</span></a>
+    <a href="04-data-access.html" rel="next"><small>Next</small><span class="pn">04</span><span class="pt">Data access</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

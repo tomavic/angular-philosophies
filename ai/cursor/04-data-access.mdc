@@ -1,0 +1,23 @@
+---
+description: Angular Philosophies, Data access. Reading with httpResource, writing with mutations, interceptors, errors, and what a failed reload keeps.
+globs: **/*.store.ts,**/*.service.ts,**/*.interceptor.ts
+alwaysApply: false
+---
+
+# Data access
+
+- Read server data with resources derived from state (`httpResource` via `withResource`); never with a `load()` method.
+- Give every resource a `defaultValue` and `{ errorHandling: 'previous value' }`; never write `?.` or `??` on a resource value in a component.
+- Design pages for both failure cases: a failed reload keeps the last value, a failed changed request falls back to the `defaultValue`.
+- Keep a resource in its component only while one component uses it; move it into a store when a second needs it.
+- Fold several resource statuses into one with `apiStatus` so a page has one loading state and one error state.
+- Write with `withMutations` and `httpMutation`; never use `httpResource` for POST, PATCH, PUT or DELETE.
+- Reload the affected reads in a mutation's `onSuccess`.
+- Check the API's real verbs before choosing PUT or PATCH.
+- Never call an endpoint for a compile-time constant; keep it as a `const` in the model file.
+- Search the whole repository for other callers before deleting a frontend call or a backend route.
+- Implement cross-cutting HTTP behaviour as functional interceptors registered by one provider function.
+- Never let an interceptor match feature URLs; use an `HttpContext` token for exceptions.
+- Type backend errors once and show failures through translation keys.
+
+Full chapter: https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/04-data-access.md

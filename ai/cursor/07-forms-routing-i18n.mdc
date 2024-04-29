@@ -1,0 +1,24 @@
+---
+description: Angular Philosophies, Forms, routing, translations and right-to-left. Reactive Forms, lazy routes, Transloco translations, and right-to-left layouts for Arabic.
+globs: **/*.routes.ts,**/*.component.html,**/i18n/*.json
+alwaysApply: false
+---
+
+# Forms, routing, translations and right-to-left
+
+- Use Reactive Forms as the default; build validators and input directives in a shared library and reuse them.
+- Type every form control; use `nonNullable` controls.
+- Make validator error messages translation keys keyed by the error name.
+- Protect forms with unsaved changes with a `canDeactivate` guard.
+- Trim and reject unwanted markup in form input in code, and ignore a second submit while a request is pending.
+- Lazy-load every feature with `loadComponent` or `loadChildren`; keep one `<feature>.routes.ts` per feature.
+- Use `withComponentInputBinding()` and read route values through `input()`, not `ActivatedRoute`.
+- Put translation keys in route `title`; build guards with factory functions such as `createRoleGuard`.
+- Provide an entry for every key in every language file; keep keys camelCase and nested by feature.
+- Carry translation keys in stores, interceptors and services; translate only in templates.
+- Read the language signal inside a request that depends on language so it refetches on change.
+- Expose a `dir` computed from the language store and bind it on the root element.
+- Use logical properties (`ms-*`, `pe-*`, `text-start`, `start-*`), never physical left and right.
+- Mirror directional icons in right-to-left; do not mirror numerals, logos or code.
+
+Full chapter: https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/07-forms-routing-i18n.md

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accessibility | Angular Philosophies</title>
+<meta name="description" content="Contrast you measure, keyboard and focus, meaning without colour.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Accessibility | Angular Philosophies">
+<meta property="og:description" content="Contrast you measure, keyboard and focus, meaning without colour.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/08-accessibility.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">08</span>
+    <p class="time"><span>Chapter 08 · Quality</span></p>
+    <h1>Accessibility</h1>
+    <p class="lead">Contrast you measure, keyboard and focus, meaning without colour.</p>
+    <p class="ch-facts"><span>12 rules</span><span>3 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/08-accessibility.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="contrast" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#measure-contrast-don-t-judge-it">Measure contrast, don't judge it</a></li><li><a href="#meaning-never-rides-on-colour-alone">Meaning never rides on colour alone</a></li><li><a href="#keyboard-and-focus">Keyboard and focus</a></li><li><a href="#names-roles-and-announcements">Names, roles and announcements</a></li><li><a href="#size-and-motion">Size and motion</a></li><li><a href="#let-the-tools-catch-the-easy-ones">Let the tools catch the easy ones</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p>Accessibility is part of "done". It is cheap to build in from the first commit and expensive to retrofit, and the people it protects are not a small group: anyone on a phone in sunlight, anyone using a keyboard, anyone whose first language is read right to left.</p>
+<h2 id="measure-contrast-don-t-judge-it">Measure contrast, don't judge it</h2>
+<p>Eyes lie, especially on your own monitor. Measure.</p>
+<div class="table-wrap"><table><thead><tr><th>Text</th><th>Minimum ratio</th></tr></thead><tbody><tr><td data-label="Text">Small text (under 18px, or under 14px bold)</td><td data-label="Minimum ratio"><strong>7:1</strong></td></tr><tr><td data-label="Text">Any other text</td><td data-label="Minimum ratio">4.5:1</td></tr><tr><td data-label="Text">Large text, icons, input borders, focus rings</td><td data-label="Minimum ratio">3:1</td></tr></tbody></table></div>
+<p>7:1 for small text is stricter than the WCAG AA minimum of 4.5:1. It is the AAA level, and it is what keeps small labels readable on a phone outdoors. <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/a11y/contrast.ts">templates/a11y/contrast.ts</a> is a 15-line function that returns the ratio between two hex colours, and its spec pins known values.</p>
+<p>A brand colour is usually the problem. A saturated blue such as <code>#0059ff</code> on a near-black <code>#101820</code> measures 3.3:1. That is fine for a large heading or a filled button, and unreadable as a 12px label. So:</p>
+<ul><li><strong>Brand colours are for fills, borders and large text.</strong> Small text uses a neutral token with a measured ratio.</li><li><strong>Define text colours as design tokens</strong> and check the token pairs once, rather than checking every screen.</li><li><strong>Check dark mode separately.</strong> A pair that passes on white can fail on dark.</li></ul>
+<h2 id="meaning-never-rides-on-colour-alone">Meaning never rides on colour alone</h2>
+<p>A red border is not an error message. Pair every colour signal with text, an icon or a pattern:</p>
+<ul><li>An invalid field shows an icon and a message, and the control has <code>aria-invalid="true"</code>.</li><li>A status is a word ("Paid", "Cancelled") as well as a colour, and a chart series has a label or a pattern as well as a hue.</li><li>A required field says "required" in text, not only with a coloured asterisk.</li></ul>
+<h2 id="keyboard-and-focus">Keyboard and focus</h2>
+<ul><li>Every interactive element is reachable with Tab, in reading order, and operable with Enter or Space. Use a real <code>&lt;button&gt;</code> or <code>&lt;a&gt;</code>, not a clickable <code>&lt;div&gt;</code>.</li><li>Focus is always visible. Don't remove the outline; restyle it with a colour that meets 3:1 against its surroundings.</li><li>A dialog moves focus in when it opens, traps it while open and returns it to the trigger on close.</li><li>After a route change, move focus to the page heading so a screen reader announces where it landed.</li><li>Don't use positive <code>tabindex</code>.</li></ul>
+<h2 id="names-roles-and-announcements">Names, roles and announcements</h2>
+<ul><li>Every control has an accessible name: a <code>&lt;label for&gt;</code>, or <code>aria-label</code> for an icon button.</li><li>Use native elements before ARIA. <code>aria-*</code> repairs a missing semantic; it doesn't replace one.</li><li>Errors and status changes that appear without a page load use <code>role="alert"</code> or <code>aria-live="polite"</code>.</li><li>A list that is loading carries <code>aria-busy</code>, as in <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/order-list.component.html">order-list.component.html</a>.</li><li>Images have <code>alt</code>; decorative ones have <code>alt=""</code>.</li></ul>
+<h2 id="size-and-motion">Size and motion</h2>
+<ul><li>Body text is at least 16px, and nothing meaningful is under 12px. Check at phone scale, not on a desktop monitor.</li><li>Touch targets are at least 44 by 44 CSS pixels.</li><li>Respect <code>prefers-reduced-motion</code>: turn off parallax, large slides and autoplay for those users.</li><li>Don't rely on hover for anything a touch user needs.</li></ul>
+<h2 id="let-the-tools-catch-the-easy-ones">Let the tools catch the easy ones</h2>
+<p>Enable the <code>templateAccessibility</code> config from <code>angular-eslint</code> in the shared ESLint config and leave it on. The common temptation is to switch a rule off to ship a form; fix the markup instead. Automated checks catch only part of the problems, so also tab through every new screen once with the mouse unplugged.</p>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Measure contrast with a function or tool; require 7:1 for small text, 4.5:1 for other text, and 3:1 for large text, icons, borders and focus rings.</li><li>Use brand colours only for fills, borders and large text; give small text a neutral token with a measured ratio.</li><li>Check light and dark themes separately.</li><li>Never let colour alone carry meaning; pair it with text, an icon or a pattern.</li><li>Mark invalid controls with <code>aria-invalid</code> and show the error as text.</li><li>Use native <code>&lt;button&gt;</code> and <code>&lt;a&gt;</code> for interactive elements; never a clickable <code>&lt;div&gt;</code>.</li><li>Keep focus visible with at least 3:1 contrast; never remove the outline without replacing it.</li><li>Move focus into a dialog on open, trap it while open, and return it on close; move focus to the heading after a route change.</li><li>Give every control an accessible name; prefer native elements over ARIA.</li><li>Announce dynamic errors and status changes with <code>role="alert"</code> or <code>aria-live</code>.</li><li>Keep body text at 16px or more, touch targets at 44px or more, and honour <code>prefers-reduced-motion</code>.</li><li>Enable the Angular ESLint template accessibility rules and do not switch them off to ship.</li></ol>
+  <pre id="rules-md" hidden>- Measure contrast with a function or tool; require 7:1 for small text, 4.5:1 for other text, and 3:1 for large text, icons, borders and focus rings.
+- Use brand colours only for fills, borders and large text; give small text a neutral token with a measured ratio.
+- Check light and dark themes separately.
+- Never let colour alone carry meaning; pair it with text, an icon or a pattern.
+- Mark invalid controls with `aria-invalid` and show the error as text.
+- Use native `&lt;button&gt;` and `&lt;a&gt;` for interactive elements; never a clickable `&lt;div&gt;`.
+- Keep focus visible with at least 3:1 contrast; never remove the outline without replacing it.
+- Move focus into a dialog on open, trap it while open, and return it on close; move focus to the heading after a route change.
+- Give every control an accessible name; prefer native elements over ARIA.
+- Announce dynamic errors and status changes with `role="alert"` or `aria-live`.
+- Keep body text at 16px or more, touch targets at 44px or more, and honour `prefers-reduced-motion`.
+- Enable the Angular ESLint template accessibility rules and do not switch them off to ship.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="07-forms-routing-i18n.html" rel="prev"><small>Before</small><span class="pn">07</span><span class="pt">Forms, routing, translations and right-to-left</span></a>
+    <a href="09-testing.html" rel="next"><small>Next</small><span class="pn">09</span><span class="pt">Testing</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

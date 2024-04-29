@@ -1,0 +1,22 @@
+---
+description: Angular Philosophies, Accessibility. Contrast you measure, keyboard and focus, meaning without colour, names and announcements.
+globs: **/*.component.html,**/*.css
+alwaysApply: false
+---
+
+# Accessibility
+
+- Measure contrast with a function or tool; require 7:1 for small text, 4.5:1 for other text, and 3:1 for large text, icons, borders and focus rings.
+- Use brand colours only for fills, borders and large text; give small text a neutral token with a measured ratio.
+- Check light and dark themes separately.
+- Never let colour alone carry meaning; pair it with text, an icon or a pattern.
+- Mark invalid controls with `aria-invalid` and show the error as text.
+- Use native `<button>` and `<a>` for interactive elements; never a clickable `<div>`.
+- Keep focus visible with at least 3:1 contrast; never remove the outline without replacing it.
+- Move focus into a dialog on open, trap it while open, and return it on close; move focus to the heading after a route change.
+- Give every control an accessible name; prefer native elements over ARIA.
+- Announce dynamic errors and status changes with `role="alert"` or `aria-live`.
+- Keep body text at 16px or more, touch targets at 44px or more, and honour `prefers-reduced-motion`.
+- Enable the Angular ESLint template accessibility rules and do not switch them off to ship.
+
+Full chapter: https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/08-accessibility.md

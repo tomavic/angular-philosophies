@@ -1,0 +1,33 @@
+<label for="search">Search</label>
+<input id="search" type="search" [value]="store.search()" (input)="store.setSearch($any($event.target).value)" />
+
+<select aria-label="Status" (change)="store.setStatus($any($event.target).value || null)">
+  <option value="">All</option>
+  @for (status of statuses; track status) {
+    <option [value]="status" [selected]="store.status() === status">{{ status }}</option>
+  }
+</select>
+
+@if (store.listError()) {
+  <p role="alert">The list could not be refreshed. Showing the last result.</p>
+  <button type="button" (click)="store.refresh()">Try again</button>
+}
+
+<ul [attr.aria-busy]="store.listIsLoading()">
+  @for (order of store.listValue().items; track order.id) {
+    <li>
+      {{ order.customer }}: {{ order.total }} ({{ order.status }})
+      <button type="button" [disabled]="store.cancelIsPending()" (click)="store.cancel(order.id)">Cancel</button>
+    </li>
+  } @empty {
+    <li>No orders match.</li>
+  }
+</ul>
+
+<nav aria-label="Pages">
+  <button type="button" [disabled]="store.page() === 1" (click)="store.setPage(store.page() - 1)">Previous</button>
+  <span>{{ store.page() }} / {{ store.pageCount() }}</span>
+  <button type="button" [disabled]="store.page() >= store.pageCount()" (click)="store.setPage(store.page() + 1)">
+    Next
+  </button>
+</nav>

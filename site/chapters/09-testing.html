@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testing | Angular Philosophies</title>
+<meta name="description" content="How to write a spec in seven steps, with fakes instead of stubs.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Testing | Angular Philosophies">
+<meta property="og:description" content="How to write a spec in seven steps, with fakes instead of stubs.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/09-testing.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">09</span>
+    <p class="time"><span>Chapter 09 · Quality</span></p>
+    <h1>Testing</h1>
+    <p class="lead">How to write a spec in seven steps, with fakes instead of stubs.</p>
+    <p class="ch-facts"><span>15 rules</span><span>9 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/09-testing.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="worlds" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#the-idea">The idea</a></li><li><a href="#the-toolkit">The toolkit</a></li><li><a href="#the-recipe">The recipe</a></li><li><a href="#cookbook">Cookbook</a></li><li><a href="#pitfalls">Pitfalls</a></li><li><a href="#review-checklist">Review checklist</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p>A unit test answers one question: <strong>given these inputs and these collaborators, does this file do the right thing?</strong> This chapter is the way I write specs, and <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/">templates/testing/</a> is the toolkit that makes it quick. All of it runs on Jest 30 with <code>jest-preset-angular</code>, zoneless. With Vitest, replace <code>jest.fn</code> and <code>jest.spyOn</code> with <code>vi.fn</code> and <code>vi.spyOn</code>; nothing else changes.</p>
+<h2 id="the-idea">The idea</h2>
+<ul><li>The file under test is <strong>real</strong>. Everything it <code>inject()</code>s is a <strong>fake</strong> you control.</li><li>Every test starts from a <strong>fresh world</strong>: new fakes, a new component, nothing left over from the last test.</li><li>A test asserts on what the file <strong>does</strong>: what it renders, what its public signals hold, what it asked its collaborators to do. Never on private fields.</li></ul>
+<p>And four things that are not used in specs:</p>
+<div class="table-wrap"><table><thead><tr><th>Don't</th><th>Because</th><th>Do instead</th></tr></thead><tbody><tr><td data-label="Don't"><code>TestBed.configureTestingModule</code> in a spec</td><td data-label="Because">Boilerplate that hides what the test is about</td><td data-label="Do instead"><code>render</code>, <code>renderPage</code>, <code>injectService</code></td></tr><tr><td data-label="Don't"><code>{ provide: Service, useValue: {...} }</code></td><td data-label="Because">Untyped, shared between tests, drifts from the real API</td><td data-label="Do instead"><code>fakeService(Service, () =&gt; ({...}))</code></td></tr><tr><td data-label="Don't"><code>HttpTestingController</code></td><td data-label="Because">Verbose, and doesn't work with <code>httpResource</code> as naturally</td><td data-label="Do instead"><code>fakeHttp({ url: body })</code></td></tr><tr><td data-label="Don't"><code>as jest.Mock</code> casts</td><td data-label="Because">Hide wrong types</td><td data-label="Do instead"><code>fakeService</code> is typed, so <code>fake.method</code> is already a mock</td></tr></tbody></table></div>
+<p>The only <code>useValue</code> allowed is for an injection token such as <code>DOCUMENT</code> or <code>PLATFORM_ID</code>.</p>
+<h2 id="the-toolkit">The toolkit</h2>
+<p>Copy <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/">templates/testing/</a> to <code>src/app/core/test/</code>, map <code>@/core/test</code> in <code>tsconfig</code> and Jest (<a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/jest.config.example.js">jest.config.example.js</a> shows how), and import from that one place.</p>
+<div class="table-wrap"><table><thead><tr><th>Need</th><th>Use</th></tr></thead><tbody><tr><td data-label="Need">Render a component</td><td data-label="Use"><code>render(Component, providers, options?)</code></td></tr><tr><td data-label="Need">Render a routed page (adds translations)</td><td data-label="Use"><code>renderPage(Component, providers, options?)</code></td></tr><tr><td data-label="Need">Get a service or a store</td><td data-label="Use"><code>injectService(Service, [Service, ...fakes])</code></td></tr><tr><td data-label="Need">Run an <code>inject()</code> function (guard, resolver)</td><td data-label="Use"><code>runInContext(() =&gt; guard(route, state), fakes)</code></td></tr><tr><td data-label="Need">Fake any service</td><td data-label="Use"><code>fakeService(Service, () =&gt; ({ method: jest.fn() }))</code></td></tr><tr><td data-label="Need">Fake HTTP, including <code>httpResource</code></td><td data-label="Use"><code>fakeHttp({ '/api/x': body, '/api/y': httpError(500) })</code></td></tr><tr><td data-label="Need">Router and route</td><td data-label="Use"><code>fakeRouter()</code>, <code>fakeRoute({ params, queryParams, data })</code></td></tr><tr><td data-label="Need">Storage</td><td data-label="Use"><code>fakeStorage(StorageService, { language: 'en' })</code></td></tr><tr><td data-label="Need">Force a resource state</td><td data-label="Use"><code>setResource(resource, { value } / { status } / { error })</code></td></tr><tr><td data-label="Need">Run pending effects</td><td data-label="Use"><code>flushEffects()</code></td></tr><tr><td data-label="Need">Wait for async work and render</td><td data-label="Use"><code>await view.whenStable()</code></td></tr></tbody></table></div>
+<h3 id="what-a-fake-gives-you">What a fake gives you</h3>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-20" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-20"><span class="k">const</span> files = <span class="f">fakeService</span>(FileDownloadService, () =&gt; ({ save: jest.<span class="f">fn</span>() }));
+
+files.fake.save; <span class="c">// the live fake the component received, typed, a jest.Mock here</span>
+<span class="f">expect</span>(files.fake.save).<span class="f">toHaveBeenCalledWith</span>(<span class="s">'order-77.json'</span>, expect.<span class="f">any</span>(String));</code></pre></div>
+<ul><li><code>x.fake</code> is the instance the code under test is using <strong>in this test</strong>.</li><li>The <strong>factory form</strong> <code>() =&gt; ({ ... })</code> builds a new fake per test, so no <code>jest.clearAllMocks()</code> is ever needed.</li><li>Helpers with controls expose them on <code>x._</code>: <code>http._.reply(url, body)</code>, <code>http._.calls(url)</code>, <code>route._.setQueryParams({...})</code>.</li><li>Types come from the real service. If the real member is a signal, the fake is a <code>signal(...)</code>; if it is an observable, use <code>of(...)</code> or a <code>Subject</code>. A wrong shape fails to compile, which is how stubs faking APIs that no longer exist get found.</li></ul>
+<h3 id="what-a-view-gives-you">What a view gives you</h3>
+<div class="table-wrap"><table><thead><tr><th>Read the DOM</th><th>Act like a user</th><th>Drive the component</th></tr></thead><tbody><tr><td data-label="Read the DOM"><code>view.$('css' or Component)</code>, <code>view.$All(...)</code></td><td data-label="Act like a user"><code>.click()</code>, <code>.input('x')</code>, <code>.type('x')</code></td><td data-label="Drive the component"><code>view.host</code>, the instance</td></tr><tr><td data-label="Read the DOM"><code>view.$testId('LOGIN_BTN')</code></td><td data-label="Act like a user"><code>.keydown('Enter')</code>, <code>.paste('x')</code></td><td data-label="Drive the component"><code>view.setInput('name', value)</code>, typed</td></tr><tr><td data-label="Read the DOM"><code>view.getByText('Cancel')</code></td><td data-label="Act like a user"><code>.focus()</code>, <code>.mouseEnter()</code></td><td data-label="Drive the component"><code>view.detectChanges()</code></td></tr><tr><td data-label="Read the DOM"><code>.textContent</code>, <code>.attr()</code>, <code>.hasClass()</code></td><td data-label="Act like a user"></td><td data-label="Drive the component"><code>view.inject(Service)</code></td></tr></tbody></table></div>
+<p>Typed <code>setInput</code> uses Angular's private <code>ɵINPUT_SIGNAL_BRAND_WRITE_TYPE</code>. That is the one private API in the toolkit; if a future Angular renames it, one type in <code>testing-utils.ts</code> is the only line to change.</p>
+<h2 id="the-recipe">The recipe</h2>
+<ol><li>Read the file, and its template, and classify it.</li><li>List every injection.</li><li>Pick a fake for each one.</li><li>List the behaviours and branches, as test names, before writing code.</li><li>Decide the describes.</li><li>Write the spec.</li><li>Run with coverage and close the gaps.</li></ol>
+<h3 id="1-classify">1. Classify</h3>
+<div class="table-wrap"><table><thead><tr><th>Kind</th><th>Build it with</th></tr></thead><tbody><tr><td data-label="Kind">Service, store, guard class</td><td data-label="Build it with"><code>injectService(Service, [Service, ...fakes])</code></td></tr><tr><td data-label="Kind">Component with no translations</td><td data-label="Build it with"><code>render(Component, fakes)</code></td></tr><tr><td data-label="Kind">Page or component using Transloco</td><td data-label="Build it with"><code>renderPage(Component, fakes)</code></td></tr><tr><td data-label="Kind">Directive or pipe</td><td data-label="Build it with"><code>render(TestHost, fakes)</code> with a tiny host component</td></tr><tr><td data-label="Kind">Pure function</td><td data-label="Build it with">Call it directly. No Angular needed</td></tr></tbody></table></div>
+<h3 id="2-list-every-injection">2. List every injection</h3>
+<p>Collect them from five places: <code>inject()</code> fields, constructor parameters, <code>inject*</code> helper functions (open them to see what they inject), <code>httpResource</code> and <code>resource</code> calls (<code>httpResource</code> uses <code>HttpClient</code>), and the component's own <code>providers</code> plus its child components, since rendering builds those too.</p>
+<p><strong>An injection you don't use still has to be satisfied.</strong> A component that injects a toaster but never calls it still makes Angular build the real one, and the real one may need a library service you didn't expect. The first run fails with <code>NG0201: No provider found</code>. Fake it with an empty object.</p>
+<h3 id="3-pick-a-fake">3. Pick a fake</h3>
+<p>Go top to bottom and stop at the first rule that fits:</p>
+<div class="table-wrap"><table><thead><tr><th>The injection is</th><th>Do this</th></tr></thead><tbody><tr><td data-label="The injection is"><code>HttpClient</code>, including <code>httpResource</code></td><td data-label="Do this"><code>fakeHttp({ url: body })</code></td></tr><tr><td data-label="The injection is"><code>Router</code> or <code>ActivatedRoute</code></td><td data-label="Do this"><code>fakeRouter()</code> or <code>fakeRoute({ params })</code></td></tr><tr><td data-label="The injection is">Translations</td><td data-label="Do this">Real, through <code>renderPage</code></td></tr><tr><td data-label="The injection is">A root store that is plain state with no dependencies</td><td data-label="Do this">Keep it <strong>real</strong> and seed it through its own methods</td></tr><tr><td data-label="The injection is">Anything else</td><td data-label="Do this"><code>fakeService(X, () =&gt; ({ onlyWhatIsUsed: jest.fn() }))</code></td></tr><tr><td data-label="The injection is">An injection token</td><td data-label="Do this"><code>{ provide: TOKEN, useValue }</code></td></tr></tbody></table></div>
+<p>Two rules for <code>fakeService</code>: <strong>fake only what the code uses</strong> (<code>{ save: jest.fn() }</code> is enough when only <code>save()</code> is called), and <strong>match the real types</strong> so the fake can't drift.</p>
+<p>When a service is also declared in the component's own <code>providers</code>, a fake in the shared list is ignored, because the component's provider wins. Use the <code>providers</code> option, which overrides everywhere:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-21" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-21">view = await <span class="f">renderPage</span>(Component, providers, { providers: [<span class="f">fakeService</span>(Toaster, {})] });</code></pre></div>
+<h3 id="4-list-behaviours-before-writing-code">4. List behaviours before writing code</h3>
+<p>Walk the file and note every place it can go two ways: <code>if</code>, <code>?:</code>, <code>&amp;&amp;</code>, <code>??</code>, <code>?.</code>, <code>@if</code>, <code>@for</code> with <code>@empty</code>, <code>@switch</code>, <code>next</code> and <code>error</code> callbacks, every public method and every computed. Write one line per behaviour:</p>
+<ul><li>renders the title and no error before the user does anything</li><li>confirming with an empty, blank or HTML reason shows the error and sends nothing</li><li>confirming with a valid reason sends the trimmed text and the id from the dialog</li><li>while sending, it shows loading, disables Back and ignores a second click</li><li>the API says yes: the dialog closes with <code>true</code></li><li>the API says no: the dialog stays open</li></ul>
+<p>Each line is one <code>it(...)</code>, named as a sentence. Variants of one check use <code>it.each</code>.</p>
+<h3 id="5-decide-the-describes">5. Decide the describes</h3>
+<p>This is the step people get wrong most often.</p>
+<blockquote><strong>A top-level <code>describe</code> is one world: one set of providers, fixed when the component is created.</strong> <strong>A nested <code>describe</code> groups tests that share an extra <code>beforeEach</code> action inside that world.</strong></blockquote>
+<p>For each condition ask: <em>can I change it from inside a test, through a fake?</em></p>
+<div class="table-wrap"><table><thead><tr><th>Same describe: a test can change it</th><th>New top-level describe: it can't</th></tr></thead><tbody><tr><td data-label="Same describe: a test can change it">A fake's signal: <code>language.fake.language.set('ar')</code></td><td data-label="New top-level describe: it can't">Something read once in a constructor or field initialiser</td></tr><tr><td data-label="Same describe: a test can change it">A fake's return value: <code>x.fake.get.mockReturnValue(...)</code></td><td data-label="New top-level describe: it can't">The route snapshot: <code>fakeRoute({ params })</code></td></tr><tr><td data-label="Same describe: a test can change it">A later HTTP answer: <code>http._.reply(url, body)</code> then reload</td><td data-label="New top-level describe: it can't">Dialog data</td></tr><tr><td data-label="Same describe: a test can change it">User input: <code>.input()</code>, <code>.click()</code>, <code>setInput()</code></td><td data-label="New top-level describe: it can't">The first HTTP answer, when you assert the first render</td></tr><tr><td data-label="Same describe: a test can change it"></td><td data-label="New top-level describe: it can't">A component-level provider</td></tr></tbody></table></div>
+<p>For the second column, add a top-level describe that swaps only that one fake through <code>options.providers</code>:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-22" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-22"><span class="f">describe</span>(<span class="s">'OrderDetailsComponent when the API fails'</span>, () =&gt; {
+  <span class="f">it</span>(<span class="s">'shows the error instead of the order'</span>, async () =&gt; {
+    <span class="k">const</span> view = await <span class="f">renderPage</span>(OrderDetailsComponent, providers, {
+      providers: [<span class="f">fakeHttp</span>({ [ORDER_URL]: <span class="f">httpError</span>(500) })],
+    });
+    await view.<span class="f">whenStable</span>();
+    ...</code></pre></div>
+<p>Trying to swap a fake inside a test fails with "Cannot configure the test module when the test module has already been instantiated". That error means you need another describe.</p>
+<h3 id="6-write-the-spec">6. Write the spec</h3>
+<p>Every spec has the same shape. <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/examples/order-details.component.spec.ts">order-details.component.spec.ts</a> is the complete version:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-23" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-23"><span class="c">// 1. Fakes: one per injection, at module level, factory form.</span>
+<span class="k">const</span> http = <span class="f">fakeHttp</span>({ [ORDER_URL]: order });
+<span class="k">const</span> route = <span class="f">fakeRoute</span>({ params: { orderId: <span class="s">'77'</span> } });
+
+<span class="c">// 2. The shared provider list.</span>
+<span class="k">const</span> providers = [<span class="f">provideRouter</span>([]), http, route, language, files];
+
+<span class="c">// 3. One describe per world.</span>
+<span class="f">describe</span>(<span class="s">'OrderDetailsComponent'</span>, () =&gt; {
+  let view: RenderResult&lt;OrderDetailsComponent&gt;;
+
+  <span class="c">// 4. Build the world in beforeEach.</span>
+  <span class="f">beforeEach</span>(async () =&gt; {
+    view = await <span class="f">renderPage</span>(OrderDetailsComponent, providers);
+    await view.<span class="f">whenStable</span>(); <span class="c">// let httpResource load and the template render</span>
+  });
+
+  <span class="c">// 5. One behaviour per it, named as a sentence.</span>
+  <span class="f">it</span>(<span class="s">'loads the order named in the route'</span>, () =&gt; {
+    <span class="f">expect</span>(http._.<span class="f">calls</span>(ORDER_URL)).<span class="f">toBe</span>(1);
+    <span class="f">expect</span>(view.$<span class="f">testId</span>(<span class="s">'ORDER_TITLE'</span>).textContent).<span class="f">toBe</span>(<span class="s">'Order 77'</span>);
+  });
+});
+
+<span class="c">// 6. Variant worlds swap one fake.</span></code></pre></div>
+<p>Habits that keep specs readable:</p>
+<ul><li><strong>Arrange, act, assert</strong>, with a blank line between.</li><li><strong>Name helpers after what the user does</strong>, so tests read like a story: <code>const confirmButton = () =&gt; view.getByText('Confirm')</code> and <code>const answer = (ok: boolean) =&gt; api.fake.cancel.mock.calls[0][1](ok)</code>.</li><li><strong>Prefer the DOM and public signals</strong> over private members. Use <code>component['x']</code> rather than <code>as any</code> only when there is no public way.</li><li><strong>Make test data <code>satisfies</code> the real model</strong>: <code>const order = { ... } satisfies Order;</code>, so a renamed field fails to compile.</li></ul>
+<h3 id="7-coverage">7. Coverage</h3>
+<p>Run one spec with coverage for its source file, then read the uncovered lines. For each gap decide:</p>
+<div class="table-wrap"><table><thead><tr><th>The gap is</th><th>Do this</th></tr></thead><tbody><tr><td data-label="The gap is">A real state you haven't tested</td><td data-label="Do this">Add the test</td></tr><tr><td data-label="The gap is">Code that can never run (a <code>?.</code> after validation, an unused <code>computed</code>)</td><td data-label="Do this">Simplify the code if behaviour stays the same, and list the edit in the pull request</td></tr><tr><td data-label="The gap is">Can't be simplified safely</td><td data-label="Do this"><code>/* istanbul ignore next */</code> with a one-line reason</td></tr></tbody></table></div>
+<h2 id="cookbook">Cookbook</h2>
+<p><strong>HTTP.</strong></p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-24" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-24"><span class="k">const</span> http = <span class="f">fakeHttp</span>({
+  <span class="s">'/api/orders'</span>: { items: [] }, <span class="c">// a body; the longest matching key wins</span>
+  <span class="s">'/api/limits'</span>: <span class="f">httpError</span>(500), <span class="c">// an error reply</span>
+});
+
+http._.<span class="f">reply</span>(<span class="s">'/api/orders'</span>, { items: [a] }); <span class="c">// change the answer for later requests in this test</span>
+http._.<span class="f">calls</span>(<span class="s">'/api/orders'</span>); <span class="c">// how many requests hit it</span>
+<span class="f">expect</span>(http.fake.post).<span class="f">toHaveBeenCalledWith</span>(<span class="s">'/api/x'</span>, body);
+
+<span class="k">const</span> slow = <span class="f">fakeHttp</span>({}, { pending: true }); <span class="c">// every request waits</span>
+slow._.<span class="f">flush</span>(<span class="s">'/api/orders'</span>, body); <span class="c">// answer it</span>
+slow._.<span class="f">fail</span>(<span class="s">'/api/orders'</span>, 403); <span class="c">// or fail it</span></code></pre></div>
+<p>An unknown URL fails with <code>fakeHttp: no route for GET /api/...</code>, so a missing route never passes silently.</p>
+<p><strong>Resources.</strong> Prefer the real thing: serve the data with <code>fakeHttp</code> and <code>await view.whenStable()</code>. To reload after changing the answer: <code>http._.reply(...)</code>, <code>view.host.order.reload()</code>, <code>await view.whenStable()</code>. To force a state without HTTP, use <code>setResource(view.host.list, { status: 'reloading' })</code> <strong>before</strong> the first <code>detectChanges</code> that reads the resource, because a <code>computed</code> that already read it keeps its cached value.</p>
+<p><strong>A callback passed to a service.</strong> Capture it, then fire it when the test is ready, as the dialog spec does with <code>answer(true)</code>.</p>
+<p><strong>Signals in fakes.</strong> Put <code>signal(...)</code> in the factory and change it with <code>x.fake.sig.set(...)</code>, as <code>language</code> does in the page spec.</p>
+<p><strong>Inputs and outputs.</strong></p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-25" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-25">view = await <span class="f">render</span>(Card, [], { inputs: { title: <span class="s">'Hello'</span> } }); <span class="c">// typed against the component</span>
+view.<span class="f">setInput</span>(<span class="s">'amount'</span>, <span class="s">'42'</span>); <span class="c">// typed, accepts the input's transform type</span>
+<span class="k">const</span> value = await <span class="f">firstOutputFrom</span>(view.host.saved); <span class="c">// the next output emission</span></code></pre></div>
+<p><strong>Effects and timers.</strong> <code>flushEffects()</code> runs pending effects. <code>jest.useFakeTimers()</code> with <code>advanceTimersByTimeAsync(ms)</code> covers <code>setTimeout</code> and debounce. A store spec's version of <code>whenStable</code> is a small <code>settle()</code> that flushes effects, lets the resource finish and flushes again, as in <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/examples/order-list.store.spec.ts">order-list.store.spec.ts</a>.</p>
+<p><strong>A store.</strong> <code>injectService(Store, [Store, http])</code>, call its methods, assert on its signals. See the same file.</p>
+<h2 id="pitfalls">Pitfalls</h2>
+<div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Cause and fix</th></tr></thead><tbody><tr><td data-label="Symptom"><code>NG0201: No provider found for X</code></td><td data-label="Cause and fix">Something in the tree injects X. Fake it, even if your file never calls it</td></tr><tr><td data-label="Symptom">A fake in <code>providers</code> is ignored</td><td data-label="Cause and fix">The component declares that service in its own <code>providers</code>. Use <code>{ providers: [fake] }</code> in the options</td></tr><tr><td data-label="Symptom">"Cannot configure the test module ... already instantiated"</td><td data-label="Cause and fix">You swapped a fake inside a test. Make a new top-level describe</td></tr><tr><td data-label="Symptom">The DOM still shows the loading state</td><td data-label="Cause and fix"><code>httpResource</code> hasn't settled. <code>await view.whenStable()</code></td></tr><tr><td data-label="Symptom"><code>setResource</code> has no effect</td><td data-label="Cause and fix">It ran after a <code>computed</code> cached the real value. Call it before the first <code>detectChanges</code></td></tr><tr><td data-label="Symptom">A boolean input is always on</td><td data-label="Cause and fix">You passed <code>signal(false)</code> instead of <code>false</code>. Typed <code>setInput</code> catches it</td></tr><tr><td data-label="Symptom">Tests pass alone and fail together</td><td data-label="Cause and fix">A shared mutable object at module level. Use the factory form of <code>fakeService</code></td></tr><tr><td data-label="Symptom">A debounced store never updates</td><td data-label="Cause and fix">Fake timers are on but effects weren't flushed. Call <code>flushEffects()</code>, then advance the timers</td></tr></tbody></table></div>
+<h2 id="review-checklist">Review checklist</h2>
+<ul><li>Every <code>inject()</code> in the file and in its children is satisfied by a fake, or kept real on purpose.</li><li>No <code>TestBed</code>, no <code>useValue</code> for services, no <code>as jest.Mock</code>, no <code>HttpTestingController</code>.</li><li>Fakes are module-level and use the factory form. The provider list is shared.</li><li>One top-level describe per world; variants swap one fake through <code>options.providers</code>.</li><li>Test names are sentences about behaviour, and each <code>it</code> checks one behaviour.</li><li>Every branch in the <code>.ts</code> and the template has a test, or a listed code simplification.</li><li>The new spec is at full coverage for its file, and the whole suite is green.</li></ul>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Test the real file with fakes for everything it injects; start every test from a fresh world.</li><li>Assert on behaviour (DOM, public signals, calls on fakes), never on private fields.</li><li>Never use <code>TestBed.configureTestingModule</code> directly, <code>{ provide, useValue }</code> for services, <code>HttpTestingController</code> or <code>as jest.Mock</code> in specs.</li><li>Import every test utility from <code>@/core/test</code>.</li><li>Fake services with <code>fakeService(X, () =&gt; ({ ... }))</code> in the factory form, at module level, one per <code>inject()</code>.</li><li>Fake only what the code uses, and match the real types so the fake cannot drift.</li><li>Fake HTTP, including <code>httpResource</code>, with <code>fakeHttp</code>; let unknown URLs fail loudly.</li><li>Satisfy every injection in the tree, including ones the code never calls.</li><li>Keep a root store real when it is plain state with no dependencies, and seed it through its own methods.</li><li>Write one top-level <code>describe</code> per world; use a new top-level describe with <code>options.providers</code> for anything a test cannot change through a fake.</li><li>Name tests as sentences, check one behaviour per <code>it</code>, and use <code>it.each</code> for variants of one check.</li><li>List the behaviours and branches before writing the spec.</li><li>Make test data <code>satisfies</code> the real model.</li><li>Give every store, service, guard and component a spec beside it.</li><li>Wait with <code>await view.whenStable()</code>; for stores flush effects and then settle the resource.</li></ol>
+  <pre id="rules-md" hidden>- Test the real file with fakes for everything it injects; start every test from a fresh world.
+- Assert on behaviour (DOM, public signals, calls on fakes), never on private fields.
+- Never use `TestBed.configureTestingModule` directly, `{ provide, useValue }` for services, `HttpTestingController` or `as jest.Mock` in specs.
+- Import every test utility from `@/core/test`.
+- Fake services with `fakeService(X, () =&gt; ({ ... }))` in the factory form, at module level, one per `inject()`.
+- Fake only what the code uses, and match the real types so the fake cannot drift.
+- Fake HTTP, including `httpResource`, with `fakeHttp`; let unknown URLs fail loudly.
+- Satisfy every injection in the tree, including ones the code never calls.
+- Keep a root store real when it is plain state with no dependencies, and seed it through its own methods.
+- Write one top-level `describe` per world; use a new top-level describe with `options.providers` for anything a test cannot change through a fake.
+- Name tests as sentences, check one behaviour per `it`, and use `it.each` for variants of one check.
+- List the behaviours and branches before writing the spec.
+- Make test data `satisfies` the real model.
+- Give every store, service, guard and component a spec beside it.
+- Wait with `await view.whenStable()`; for stores flush effects and then settle the resource.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="08-accessibility.html" rel="prev"><small>Before</small><span class="pn">08</span><span class="pt">Accessibility</span></a>
+    <a href="10-tooling.html" rel="next"><small>Next</small><span class="pn">10</span><span class="pt">Tooling</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

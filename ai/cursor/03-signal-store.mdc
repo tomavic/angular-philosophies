@@ -1,0 +1,25 @@
+---
+description: Angular Philosophies, The signal store. The shape of a SignalStore - facade rule, one store per view, who provides it, state, methods and commands.
+globs: **/*.store.ts
+alwaysApply: false
+---
+
+# The signal store
+
+- Make a `signalStore` the facade, API layer and state layer for its slice; components never inject `HttpClient` or a data service.
+- Never call `.subscribe()` in a component; use signals, resources or `rxMethod`.
+- Never add a `load()` method that a component must call after a filter changes; derive reads from state with resources.
+- Use one store per view (list, detail, form), provided by the component with `providers: [XStore]`.
+- Provide a feature store for shared reference data with `{ providedIn: 'root' }`; put cross-feature state in a library store.
+- Never let a feature import another feature's store.
+- Type state with an interface, name the starting value `initialState`, and expose `reset()` when the store outlives its page.
+- Change state only with `patchState`; never mutate arrays or objects in place.
+- Put derived values in `withComputed`; inject dependencies with `inject()` inside `withProps`, `withMethods` or `withHooks`.
+- Prefix private store members with `_` and expose a deliberate method when callers need them.
+- Reset `page` to 1 in every filter setter.
+- Never type a store as `any`.
+- Use `rxMethod` only when operators are needed; choose `switchMap`, `exhaustMap` or `concatMap` deliberately.
+- Persist state with `withStorageSync`, never with hand-written `localStorage` calls.
+- Give every store a spec.
+
+Full chapter: https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/03-signal-store.md

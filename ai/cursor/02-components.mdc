@@ -1,0 +1,24 @@
+---
+description: Angular Philosophies, Components. Standalone, zoneless components with signal APIs, plain templates, and file naming.
+globs: **/*.component.ts,**/*.component.html
+alwaysApply: false
+---
+
+# Components
+
+- Write components as standalone without `standalone: true`, and without `changeDetection` (OnPush is the Angular 22 default).
+- Inject dependencies with `inject()` in field initialisers; do not use constructors for injection.
+- Use the `host: {}` object; never `@HostBinding` or `@HostListener`.
+- Use `input()`, `model()`, `output()`, `viewChild()`; do not use the decorator forms in new code.
+- Run zoneless with `provideZonelessChangeDetection()`; every value a template reads must be a signal.
+- Use `computed` or `linkedSignal` to derive state; use `effect()` only for side effects outside Angular.
+- Use `@if`, `@for` (always with `track`), `@switch`, `@empty`, `@defer`; never `*ngIf`, `*ngFor`, `ngClass` or `ngStyle`.
+- Keep templates free of logic beyond a condition; move the rest into a `computed`.
+- Keep presentational components free of stores and `HttpClient`; they take inputs and emit outputs.
+- Put pages in `type:feature` libraries and presentational components in `type:ui` libraries.
+- Add `data-testid` to interactive elements and to elements that tests assert on.
+- Use named exports and `loadComponent` with a `.then(m => m.XComponent)` for routed components.
+- Use utility classes and design tokens for styling; no hex colours and no per-component stylesheets.
+- Keep `@Injectable({ providedIn: 'root' })` for stateless services; put shared state in a signal store.
+
+Full chapter: https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/02-components.md

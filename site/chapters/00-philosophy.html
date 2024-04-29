@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Philosophy | Angular Philosophies</title>
+<meta name="description" content="Build only what is needed, put each kind of code in one place, and make the right thing the easy thing.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Philosophy | Angular Philosophies">
+<meta property="og:description" content="Build only what is needed, put each kind of code in one place, and make the right thing the easy thing.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/00-philosophy.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">00</span>
+    <p class="time"><span>Chapter 00 · Structure</span></p>
+    <h1>Philosophy</h1>
+    <p class="lead">Build only what is needed, put each kind of code in one place, and make the right thing the easy thing.</p>
+    <p class="ch-facts"><span>6 rules</span><span>3 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/00-philosophy.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="third" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#code-is-a-necessary-evil">Code is a necessary evil</a></li><li><a href="#leave-it-better-than-you-found-it">Leave it better than you found it</a></li><li><a href="#one-place-for-each-thing">One place for each thing</a></li><li><a href="#make-the-right-thing-the-easy-thing">Make the right thing the easy thing</a></li><li><a href="#accessibility-and-arabic-are-not-extras">Accessibility and Arabic are not extras</a></li><li><a href="#how-to-read-the-rest">How to read the rest</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p>This is how I write Angular apps, written down so a team, a new hire or an AI agent can write them the same way. It targets Angular 22 with TypeScript 6.0, zoneless, signals everywhere, NgRx SignalStore for state, and an Nx workspace split by business domain.</p>
+<p>It is a set of defaults, not a law. Every rule comes with the reason behind it, so you can tell when your situation is different enough to break one.</p>
+<h2 id="code-is-a-necessary-evil">Code is a necessary evil</h2>
+<p>Every line you write is a line someone reads, tests, upgrades and eventually deletes. The best change is the one you didn't have to make, and the second best is the smallest one that works.</p>
+<ul><li><strong>Build what is needed today.</strong> YAGNI is the most useful rule I know. A flag, a config option or an abstraction for a case that might come later usually costs more than adding it later, because later you know what the case really is.</li><li><strong>Don't be clever.</strong> Clever code is read at 3am by someone who didn't write it. Boring and obvious wins.</li><li><strong>Think before adding a dependency.</strong> If the platform does it, use the platform. Angular 22 already ships <code>httpResource</code>, signal inputs, <code>linkedSignal</code>, a router, forms and a control flow syntax. Reach for a library when the problem is real, not when the tutorial used one.</li><li><strong>Delete before you add.</strong> Removing unused code, an old wrapper or a flag nobody sets is progress.</li><li><strong>Write an abstraction the third time, not the first.</strong> Two copies are cheaper than the wrong shared function. This is also how the custom store features in <a href="06-custom-features.html">06-custom-features.md</a> are meant to appear.</li></ul>
+<h2 id="leave-it-better-than-you-found-it">Leave it better than you found it</h2>
+<p>When you touch a file, fix the small smell next to your change or leave a <code>TODO</code> with a reason. Don't start a rewrite inside a feature branch. Refactor in small steps with the tests green, and make the next person's change easier than yours was.</p>
+<h2 id="one-place-for-each-thing">One place for each thing</h2>
+<p>Most arguments about structure go away when each kind of code has exactly one home:</p>
+<ul><li>Server state, API calls and the facade a page talks to live in a <strong>signal store</strong>.</li><li>A page's markup and its wiring live in a <strong>component</strong>.</li><li>Anything two features need lives in a <strong>library</strong> with a tag that says what it may depend on.</li><li>A rule a machine can check is a <strong>lint rule</strong>, not a paragraph in a wiki.</li></ul>
+<p><a href="01-architecture.html">01-architecture.md</a> and <a href="03-signal-store.html">03-signal-store.md</a> are these ideas made specific.</p>
+<h2 id="make-the-right-thing-the-easy-thing">Make the right thing the easy thing</h2>
+<p>Conventions only survive if following them is less work than ignoring them. That is why this repo ships templates (a store, a test toolkit, config files) and AI instructions as well as prose. Copy the template, change the names, and you are already following the guide.</p>
+<h2 id="accessibility-and-arabic-are-not-extras">Accessibility and Arabic are not extras</h2>
+<p>A page that can't be used with a keyboard, or can't be read at arm's length, is not finished. A layout that breaks in right-to-left is not finished either. Both are cheap to do from the first commit and expensive to retrofit, so they are part of the defaults. See <a href="07-forms-routing-i18n.html">07-forms-routing-i18n.md</a> and <a href="08-accessibility.html">08-accessibility.md</a>.</p>
+<h2 id="how-to-read-the-rest">How to read the rest</h2>
+<p>Each chapter ends with a short list of rules. The text explains the why; the rules are what a linter, a reviewer or an AI agent checks. If a rule and the text disagree, the rule is the bug, so open an issue.</p>
+<div class="table-wrap"><table><thead><tr><th>Chapter</th><th>What it settles</th></tr></thead><tbody><tr><td data-label="Chapter"><a href="01-architecture.html">01 Architecture</a></td><td data-label="What it settles">How the workspace is divided and what may import what</td></tr><tr><td data-label="Chapter"><a href="02-components.html">02 Components</a></td><td data-label="What it settles">How a component, a template and a file are written</td></tr><tr><td data-label="Chapter"><a href="03-signal-store.html">03 Signal store</a></td><td data-label="What it settles">The shape of every store and who provides it</td></tr><tr><td data-label="Chapter"><a href="04-data-access.html">04 Data access</a></td><td data-label="What it settles">Reading, writing, errors and interceptors</td></tr><tr><td data-label="Chapter"><a href="05-toolkit.html">05 Toolkit</a></td><td data-label="What it settles">Which <code>@ngrx-toolkit/core</code> features to use and which to leave</td></tr><tr><td data-label="Chapter"><a href="06-custom-features.html">06 Custom features</a></td><td data-label="What it settles">Writing your own <code>signalStoreFeature</code></td></tr><tr><td data-label="Chapter"><a href="07-forms-routing-i18n.html">07 Forms, routing, i18n</a></td><td data-label="What it settles">Forms, lazy routes, translations, RTL</td></tr><tr><td data-label="Chapter"><a href="08-accessibility.html">08 Accessibility</a></td><td data-label="What it settles">Contrast, focus, keyboard, meaning without colour</td></tr><tr><td data-label="Chapter"><a href="09-testing.html">09 Testing</a></td><td data-label="What it settles">How to write a spec, with a toolkit to copy</td></tr><tr><td data-label="Chapter"><a href="10-tooling.html">10 Tooling</a></td><td data-label="What it settles">pnpm, Nx, ESLint, Prettier, commits</td></tr><tr><td data-label="Chapter"><a href="11-using-with-ai.html">11 Using with AI</a></td><td data-label="What it settles">Skill, plugin, <code>llms.txt</code>, <code>AGENTS.md</code>, Cursor rules, MCP</td></tr></tbody></table></div>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Build only what the current task needs; do not add flags, options or abstractions for hypothetical cases.</li><li>Prefer the Angular platform (<code>httpResource</code>, signal APIs, router, forms) over a new dependency.</li><li>Write a shared abstraction the third time the same code appears, not the first.</li><li>When touching a file, fix nearby smells or leave a <code>TODO</code> with a reason; never rewrite inside a feature branch.</li><li>Express every rule a machine can check as a lint rule or a type, not as documentation.</li><li>Treat accessibility and right-to-left support as part of "done", not as follow-up work.</li></ol>
+  <pre id="rules-md" hidden>- Build only what the current task needs; do not add flags, options or abstractions for hypothetical cases.
+- Prefer the Angular platform (`httpResource`, signal APIs, router, forms) over a new dependency.
+- Write a shared abstraction the third time the same code appears, not the first.
+- When touching a file, fix nearby smells or leave a `TODO` with a reason; never rewrite inside a feature branch.
+- Express every rule a machine can check as a lint rule or a type, not as documentation.
+- Treat accessibility and right-to-left support as part of "done", not as follow-up work.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <span></span>
+    <a href="01-architecture.html" rel="next"><small>Next</small><span class="pn">01</span><span class="pt">Architecture</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

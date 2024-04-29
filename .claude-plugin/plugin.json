@@ -1,0 +1,19 @@
+{
+  "name": "angular-philosophies",
+  "version": "2.0.0",
+  "description": "An opinionated Angular 22 style guide as a skill and an MCP server: signal stores, DDD libraries, a fake-based test toolkit, accessibility and RTL.",
+  "author": {
+    "name": "Hatem",
+    "url": "https://github.com/tomavic"
+  },
+  "homepage": "https://github.com/tomavic/angular-philosophies",
+  "license": "MIT",
+  "skills": "./ai/skills",
+  "keywords": [
+    "angular",
+    "ngrx",
+    "signal-store",
+    "nx",
+    "style-guide"
+  ]
+}

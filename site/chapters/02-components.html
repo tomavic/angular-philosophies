@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Components | Angular Philosophies</title>
+<meta name="description" content="Standalone, zoneless components with signal APIs, plain templates, and file naming.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Components | Angular Philosophies">
+<meta property="og:description" content="Standalone, zoneless components with signal APIs, plain templates, and file naming.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/02-components.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">02</span>
+    <p class="time"><span>Chapter 02 · Structure</span></p>
+    <h1>Components</h1>
+    <p class="lead">Standalone, zoneless components with signal APIs, plain templates, and file naming.</p>
+    <p class="ch-facts"><span>14 rules</span><span>3 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/02-components.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="lighter" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#what-a-component-looks-like">What a component looks like</a></li><li><a href="#zoneless">Zoneless</a></li><li><a href="#signals-all-the-way">Signals, all the way</a></li><li><a href="#templates">Templates</a></li><li><a href="#pages-and-presentational-components">Pages and presentational components</a></li><li><a href="#files-and-naming">Files and naming</a></li><li><a href="#services">Services</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p>Angular 22 removed most of the ceremony. A component is a class with a template, and the defaults are the ones you want: standalone, <code>OnPush</code>, and no zone. Write the least that works.</p>
+<h2 id="what-a-component-looks-like">What a component looks like</h2>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-3" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-3">@<span class="f">Component</span>({
+  selector: <span class="s">'app-order-list'</span>,
+  templateUrl: <span class="s">'./order-list.component.html'</span>,
+  providers: [OrderListStore],
+  host: { <span class="k">class</span>: <span class="s">'block p-4'</span> },
+})
+<span class="k">export</span> <span class="k">class</span> OrderListComponent {
+  <span class="k">protected</span> <span class="k">readonly</span> store = <span class="f">inject</span>(OrderListStore);
+  <span class="k">protected</span> <span class="k">readonly</span> statuses = ORDER_STATUS_OPTIONS;
+}</code></pre></div>
+<p>The full file and its template are in <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/signal-store/order-list.component.ts">templates/signal-store/</a>. Notice what is missing:</p>
+<ul><li><strong>No <code>standalone: true</code>.</strong> It is the default.</li><li><strong>No <code>changeDetection: OnPush</code>.</strong> In Angular 22 <code>OnPush</code> is the default (<code>ChangeDetectionStrategy.Eager</code> is the opt-out). Don't edit old files only to remove it, but don't add it to new ones.</li><li><strong>No constructor.</strong> Dependencies come from <code>inject()</code> in field initialisers.</li><li><strong>No <code>@HostBinding</code> or <code>@HostListener</code>.</strong> Use the <code>host: {}</code> object.</li><li><strong>No <code>NgModule</code>, no <code>CommonModule</code>, no <code>ngClass</code>, no <code>ngStyle</code>.</strong> Bind <code>[class.active]</code> and <code>[style.width.px]</code>.</li><li><strong>No <code>ngOnInit</code> for loading data.</strong> Reads are resources derived from state, see <a href="04-data-access.html">04-data-access.md</a>.</li></ul>
+<h2 id="zoneless">Zoneless</h2>
+<p>Apps run with <code>provideZonelessChangeDetection()</code> and no <code>zone.js</code>. Change detection runs when a signal read by a template changes, an event handler runs, or <code>markForCheck</code> is called. In practice that means one rule: <strong>state a template reads must be a signal.</strong> A plain field that you mutate will not update the screen.</p>
+<h2 id="signals-all-the-way">Signals, all the way</h2>
+<div class="table-wrap"><table><thead><tr><th>Need</th><th>Use</th></tr></thead><tbody><tr><td data-label="Need">An input</td><td data-label="Use"><code>input()</code> or <code>input.required&lt;T&gt;()</code></td></tr><tr><td data-label="Need">Two-way binding</td><td data-label="Use"><code>model()</code></td></tr><tr><td data-label="Need">An output</td><td data-label="Use"><code>output&lt;T&gt;()</code></td></tr><tr><td data-label="Need">A query</td><td data-label="Use"><code>viewChild()</code>, <code>contentChildren()</code></td></tr><tr><td data-label="Need">Local state</td><td data-label="Use"><code>signal()</code></td></tr><tr><td data-label="Need">Derived state</td><td data-label="Use"><code>computed()</code></td></tr><tr><td data-label="Need">State that follows another signal but stays writable</td><td data-label="Use"><code>linkedSignal()</code></td></tr><tr><td data-label="Need">Shared or page state</td><td data-label="Use">a signal store, see <a href="03-signal-store.html">03-signal-store.md</a></td></tr></tbody></table></div>
+<p>Keep <code>effect()</code> for side effects that leave Angular (writing to <code>localStorage</code>, calling a third-party widget). If you are using an effect to set a signal from another signal, you wanted <code>computed</code> or <code>linkedSignal</code>.</p>
+<h2 id="templates">Templates</h2>
+<ul><li>Use <code>@if</code>, <code>@for</code> and <code>@switch</code>. <code>@for</code> always has a <code>track</code>, and <code>track item.id</code> beats <code>track $index</code> when items have ids.</li><li>Use <code>@empty</code> for the empty list, and <code>@defer</code> for heavy parts below the fold.</li><li>No logic in templates beyond a condition or a call to a signal. Put the rest in a <code>computed</code>.</li><li>Use <code>NgOptimizedImage</code> for static images.</li><li>Put a <code>data-testid</code> on interactive elements and on the elements tests assert on. See <a href="09-testing.html">09-testing.md</a>.</li><li>Use <code>@let</code> for a value you read three times in one template.</li></ul>
+<h2 id="pages-and-presentational-components">Pages and presentational components</h2>
+<p>Two kinds of component, kept apart:</p>
+<ul><li><strong>Page (smart).</strong> Routed or a feature root. Provides its store, injects it, passes data down. Lives in a <code>type:feature</code> library.</li><li><strong>Presentational (dumb).</strong> Inputs and outputs only. It never injects a store or <code>HttpClient</code>, so it can be reused and tested with <code>render(Component, [], { inputs })</code>. Lives in a <code>type:ui</code> library.</li></ul>
+<p>A component that needs both is a page that contains a presentational component. Split it.</p>
+<h2 id="files-and-naming">Files and naming</h2>
+<ul><li><code>order-list.component.ts</code>, <code>order-list.component.html</code>, <code>order-list.component.spec.ts</code>, side by side.</li><li>The class is <code>OrderListComponent</code>, matching the file name. Selectors use the <code>app-</code> prefix.</li><li>The template lives in its own <code>.html</code> file. Inline a template only when it is a few lines and has no logic.</li><li>Styling uses utility classes and design tokens. No per-component stylesheets, no hex colours, no arbitrary pixel values.</li><li>Named exports. A routed component is loaded with <code>loadComponent: () =&gt; import('./order-list.component').then(m =&gt; m.OrderListComponent)</code>.</li></ul>
+<h2 id="services">Services</h2>
+<p>A service that holds no state and does one job is a plain <code>@Injectable({ providedIn: 'root' })</code> class. Anything with state that a page shares is a store, not a service. Angular 22 also ships a <code>@Service()</code> decorator; this guide keeps <code>@Injectable</code> for now because every tool and library in the ecosystem understands it.</p>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Write components as standalone without <code>standalone: true</code>, and without <code>changeDetection</code> (OnPush is the Angular 22 default).</li><li>Inject dependencies with <code>inject()</code> in field initialisers; do not use constructors for injection.</li><li>Use the <code>host: {}</code> object; never <code>@HostBinding</code> or <code>@HostListener</code>.</li><li>Use <code>input()</code>, <code>model()</code>, <code>output()</code>, <code>viewChild()</code>; do not use the decorator forms in new code.</li><li>Run zoneless with <code>provideZonelessChangeDetection()</code>; every value a template reads must be a signal.</li><li>Use <code>computed</code> or <code>linkedSignal</code> to derive state; use <code>effect()</code> only for side effects outside Angular.</li><li>Use <code>@if</code>, <code>@for</code> (always with <code>track</code>), <code>@switch</code>, <code>@empty</code>, <code>@defer</code>; never <code>*ngIf</code>, <code>*ngFor</code>, <code>ngClass</code> or <code>ngStyle</code>.</li><li>Keep templates free of logic beyond a condition; move the rest into a <code>computed</code>.</li><li>Keep presentational components free of stores and <code>HttpClient</code>; they take inputs and emit outputs.</li><li>Put pages in <code>type:feature</code> libraries and presentational components in <code>type:ui</code> libraries.</li><li>Add <code>data-testid</code> to interactive elements and to elements that tests assert on.</li><li>Use named exports and <code>loadComponent</code> with a <code>.then(m =&gt; m.XComponent)</code> for routed components.</li><li>Use utility classes and design tokens for styling; no hex colours and no per-component stylesheets.</li><li>Keep <code>@Injectable({ providedIn: 'root' })</code> for stateless services; put shared state in a signal store.</li></ol>
+  <pre id="rules-md" hidden>- Write components as standalone without `standalone: true`, and without `changeDetection` (OnPush is the Angular 22 default).
+- Inject dependencies with `inject()` in field initialisers; do not use constructors for injection.
+- Use the `host: {}` object; never `@HostBinding` or `@HostListener`.
+- Use `input()`, `model()`, `output()`, `viewChild()`; do not use the decorator forms in new code.
+- Run zoneless with `provideZonelessChangeDetection()`; every value a template reads must be a signal.
+- Use `computed` or `linkedSignal` to derive state; use `effect()` only for side effects outside Angular.
+- Use `@if`, `@for` (always with `track`), `@switch`, `@empty`, `@defer`; never `*ngIf`, `*ngFor`, `ngClass` or `ngStyle`.
+- Keep templates free of logic beyond a condition; move the rest into a `computed`.
+- Keep presentational components free of stores and `HttpClient`; they take inputs and emit outputs.
+- Put pages in `type:feature` libraries and presentational components in `type:ui` libraries.
+- Add `data-testid` to interactive elements and to elements that tests assert on.
+- Use named exports and `loadComponent` with a `.then(m =&gt; m.XComponent)` for routed components.
+- Use utility classes and design tokens for styling; no hex colours and no per-component stylesheets.
+- Keep `@Injectable({ providedIn: 'root' })` for stateless services; put shared state in a signal store.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="01-architecture.html" rel="prev"><small>Before</small><span class="pn">01</span><span class="pt">Architecture</span></a>
+    <a href="03-signal-store.html" rel="next"><small>Next</small><span class="pn">03</span><span class="pt">The signal store</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

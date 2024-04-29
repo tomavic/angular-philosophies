@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Using this guide with AI | Angular Philosophies</title>
+<meta name="description" content="Installing the guide as a skill, a plugin, rules files or an MCP server.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Using this guide with AI | Angular Philosophies">
+<meta property="og:description" content="Installing the guide as a skill, a plugin, rules files or an MCP server.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/11-using-with-ai.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">11</span>
+    <p class="time"><span>Chapter 11 · AI</span></p>
+    <h1>Using this guide with AI</h1>
+    <p class="lead">Installing the guide as a skill, a plugin, rules files or an MCP server.</p>
+    <p class="ch-facts"><span>4 rules</span><span>3 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/11-using-with-ai.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="fan" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#claude-code-plugin">Claude Code plugin</a></li><li><a href="#claude-skill-without-the-plugin">Claude skill, without the plugin</a></li><li><a href="#agents-md">AGENTS.md</a></li><li><a href="#cursor-rules">Cursor rules</a></li><li><a href="#llms-txt">llms.txt</a></li><li><a href="#mcp-server">MCP server</a></li><li><a href="#writing-instructions-for-agents-that-work">Writing instructions for agents that work</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p>The guide is written so that a person can read it and a tool can follow it. Every chapter ends with a block of short, imperative rules, and those blocks are collected into formats that AI coding tools already understand. Pick the one your tool uses. They all carry the same rules, because they are generated from the same chapters.</p>
+<div class="table-wrap"><table><thead><tr><th>Format</th><th>Files</th><th>Works with</th></tr></thead><tbody><tr><td data-label="Format">Claude Code plugin</td><td data-label="Files"><code>.claude-plugin/</code>, <code>.mcp.json</code>, <code>ai/skills/</code></td><td data-label="Works with">Claude Code</td></tr><tr><td data-label="Format">Claude skill</td><td data-label="Files"><code>ai/skills/angular-philosophies/</code></td><td data-label="Works with">Claude Code, the Claude apps, anything that loads <code>SKILL.md</code></td></tr><tr><td data-label="Format"><code>AGENTS.md</code></td><td data-label="Files"><code>ai/AGENTS.md</code></td><td data-label="Works with">Codex, Cursor, Copilot, Gemini CLI, Claude Code and most other agents</td></tr><tr><td data-label="Format">Cursor rules</td><td data-label="Files"><code>ai/cursor/*.mdc</code></td><td data-label="Works with">Cursor</td></tr><tr><td data-label="Format"><code>llms.txt</code></td><td data-label="Files"><code>llms.txt</code>, <code>ai/llms-full.txt</code></td><td data-label="Works with">Any tool that can read a URL</td></tr><tr><td data-label="Format">MCP server</td><td data-label="Files"><code>ai/mcp/server.mjs</code></td><td data-label="Works with">Any MCP client</td></tr></tbody></table></div>
+<p>The generated files are not edited by hand. To change a rule, change the chapter in <code>docs/</code> and the files are rebuilt from it.</p>
+<h2 id="claude-code-plugin">Claude Code plugin</h2>
+<p>The plugin bundles the skill and the MCP server, so one install gives an agent both the rules and a way to look up a chapter.</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">bash</span><button type="button" class="copy" data-copy="code-26" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-26">/plugin marketplace add tomavic/angular-philosophies
+/plugin install angular-philosophies@angular-philosophies</code></pre></div>
+<p>After that, an Angular task in any project can load the skill on its own. For "a new orders list page with filters" it points the agent at the store, data-access and testing chapters, and at the template files to copy: a view store with a resource and a mutation, provided from the component, and a spec written with the test toolkit.</p>
+<h2 id="claude-skill-without-the-plugin">Claude skill, without the plugin</h2>
+<p>Copy the folder into your skills directory. It is self-contained: the rules are in <code>SKILL.md</code>, the full chapters are in <code>references/</code>, and the code templates are in <code>templates/</code>.</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">bash</span><button type="button" class="copy" data-copy="code-27" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-27"># for one project, from its root
+mkdir -p .claude/skills &amp;&amp; curl -sSL https://github.com/tomavic/angular-philosophies/archive/refs/heads/main.tar.gz | tar -xz --strip-components=3 -C .claude/skills angular-philosophies-main/ai/skills/angular-philosophies
+# for every project: the same command with ~/.claude/skills in place of .claude/skills</code></pre></div>
+<h2 id="agents-md"><code>AGENTS.md</code></h2>
+<p><code>ai/AGENTS.md</code> is a drop-in file: the stack, a "read this first, by task" table and every rule, grouped by chapter. Put it at the root of your project, and in an area folder if only that area follows it.</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">bash</span><button type="button" class="copy" data-copy="code-28" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-28">curl -o AGENTS.md https://raw.githubusercontent.com/tomavic/angular-philosophies/main/ai/AGENTS.md</code></pre></div>
+<p>Then add your project's own overrides under a heading of their own, above the generated rules. Where your project and this guide disagree, the project wins, and writing that down is how an agent learns which one to follow.</p>
+<h2 id="cursor-rules">Cursor rules</h2>
+<p>Each <code>ai/cursor/*.mdc</code> file covers one chapter and is attached by file type: the store rules to <code>**/*.store.ts</code>, the component rules to <code>**/*.component.ts</code> and <code>**/*.component.html</code>, the testing rules to <code>**/*.spec.ts</code>, and so on. Copy them in:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">bash</span><button type="button" class="copy" data-copy="code-29" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-29">mkdir -p .cursor/rules &amp;&amp; curl -sSL https://github.com/tomavic/angular-philosophies/archive/refs/heads/main.tar.gz | tar -xz --strip-components=3 -C .cursor/rules angular-philosophies-main/ai/cursor</code></pre></div>
+<h2 id="llms-txt"><code>llms.txt</code></h2>
+<p><code>llms.txt</code> is an index of the chapters with a line about each, and <code>llms-full.txt</code> is every chapter in one file, with the rules and the code. Give a tool the URL, or paste the full file into a chat with a model that has no file access.</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">ts</span><button type="button" class="copy" data-copy="code-30" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-30">https:<span class="c">//raw.githubusercontent.com/tomavic/angular-philosophies/main/llms.txt</span>
+https:<span class="c">//raw.githubusercontent.com/tomavic/angular-philosophies/main/ai/llms-full.txt</span></code></pre></div>
+<h2 id="mcp-server">MCP server</h2>
+<p><code>ai/mcp/server.mjs</code> is a small stdio server with no dependencies. It serves the chapters on demand, so an agent pulls only the one it needs instead of carrying everything in context.</p>
+<div class="table-wrap"><table><thead><tr><th>Tool</th><th>Returns</th></tr></thead><tbody><tr><td data-label="Tool"><code>list_topics</code></td><td data-label="Returns">Every chapter with its title and one-line summary</td></tr><tr><td data-label="Tool"><code>get_topic</code></td><td data-label="Returns">A whole chapter, by name or number</td></tr><tr><td data-label="Tool"><code>get_rules</code></td><td data-label="Returns">The rules for one chapter, or all of them</td></tr><tr><td data-label="Tool"><code>search</code></td><td data-label="Returns">The chapters and rules that mention a word or phrase</td></tr></tbody></table></div>
+<p>Add it to a client with Node 22 or later:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">bash</span><button type="button" class="copy" data-copy="code-31" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-31">claude mcp add angular-philosophies -- node /path/to/angular-philosophies/ai/mcp/server.mjs</code></pre></div>
+<p>or in any client's JSON configuration:</p>
+<div class="code-block"><div class="pane-bar" dir="ltr"><span class="file">json</span><button type="button" class="copy" data-copy="code-32" data-done="Copied">Copy</button></div><pre class="code" dir="ltr"><code id="code-32">{
+  "mcpServers": {
+    "angular-philosophies": { "command": "node", "args": ["/path/to/angular-philosophies/ai/mcp/server.mjs"] }
+  }
+}</code></pre></div>
+<p>The plugin registers the same server automatically.</p>
+<h2 id="writing-instructions-for-agents-that-work">Writing instructions for agents that work</h2>
+<p>What made these files effective, if you write your own:</p>
+<ul><li><strong>Rules, not essays.</strong> One imperative sentence each, with the word "never" where it means never.</li><li><strong>A map by task.</strong> "Adding a store: read chapter 3, copy <code>order-list.store.ts</code>." Agents follow a pointer better than a paragraph.</li><li><strong>A reference implementation for each pattern.</strong> An agent copies a real file more reliably than it follows a description.</li><li><strong>Say where your rules override the framework's defaults.</strong> Otherwise the agent applies the generic best practice it was trained on.</li><li><strong>Make the rules checkable.</strong> A rule enforced by ESLint or the compiler holds even when the instructions are ignored.</li></ul>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Treat the generated AI files (everything in <code>ai/</code> except <code>ai/mcp/server.mjs</code>, plus <code>llms.txt</code>) as build output; change the chapter in <code>docs/</code> instead.</li><li>Put <code>AGENTS.md</code> at the project root and add project-specific overrides above the generated rules; the project wins over the guide.</li><li>Keep agent instructions as one-sentence imperative rules with a task-to-chapter map and a reference file per pattern.</li><li>State where project rules override framework defaults, and back rules with lint rules or types where possible.</li></ol>
+  <pre id="rules-md" hidden>- Treat the generated AI files (everything in `ai/` except `ai/mcp/server.mjs`, plus `llms.txt`) as build output; change the chapter in `docs/` instead.
+- Put `AGENTS.md` at the project root and add project-specific overrides above the generated rules; the project wins over the guide.
+- Keep agent instructions as one-sentence imperative rules with a task-to-chapter map and a reference file per pattern.
+- State where project rules override framework defaults, and back rules with lint rules or types where possible.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="10-tooling.html" rel="prev"><small>Before</small><span class="pn">10</span><span class="pt">Tooling</span></a>
+    
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+{
+ "chapters": [
+  {
+   "slug": "00-philosophy",
+   "title": "Philosophy",
+   "blurb": "Build only what is needed, put each kind of code in one place, and make the right thing the easy thing.",
+   "group": "Structure",
+   "diagram": "third",
+   "rules": [
+    "Build only what the current task needs; do not add flags, options or abstractions for hypothetical cases.",
+    "Prefer the Angular platform (`httpResource`, signal APIs, router, forms) over a new dependency.",
+    "Write a shared abstraction the third time the same code appears, not the first.",
+    "When touching a file, fix nearby smells or leave a `TODO` with a reason; never rewrite inside a feature branch.",
+    "Express every rule a machine can check as a lint rule or a type, not as documentation.",
+    "Treat accessibility and right-to-left support as part of \"done\", not as follow-up work."
+   ]
+  },
+  {
+   "slug": "01-architecture",
+   "title": "Architecture",
+   "blurb": "How the workspace is divided into domains and layers, what may import what, and where new code goes.",
+   "group": "Structure",
+   "diagram": "layers",
+   "rules": [
+    "Give every library exactly one `scope:*` tag and one `type:*` tag in its `project.json`.",
+    "Enforce module boundaries with `@nx/enforce-module-boundaries`; dependencies flow only downward through util, data-access, core, ui, feature, shell.",
+    "Never let a domain import another domain, and never let `scope:shared` import a domain.",
+    "Keep code inside the app feature until a second consumer exists; then promote it to a library.",
+    "Split a library with secondary entry points, not with extra libraries.",
+    "Export by name from each `index.ts`; do not `export *` runtime code.",
+    "Import through path aliases (`@shop/...`, `@/...`); never use `../../` across feature or library boundaries.",
+    "Make `type:util` code free of Angular injection; pass language and configuration as parameters.",
+    "Forbid sibling entry points from importing each other with `no-restricted-imports` in the library's own ESLint config.",
+    "Duplicate small code instead of adding an `if (guest)`-style mode flag to a shared function.",
+    "Name files `<name>.component.ts`, `<name>.store.ts`, `<name>.service.ts`, `<name>.model.ts`, `<feature>.routes.ts`, and keep each spec beside its source."
+   ]
+  },
+  {
+   "slug": "02-components",
+   "title": "Components",
+   "blurb": "Standalone, zoneless components with signal APIs, plain templates, and file naming.",
+   "group": "Structure",
+   "diagram": "lighter",
+   "rules": [
+    "Write components as standalone without `standalone: true`, and without `changeDetection` (OnPush is the Angular 22 default).",
+    "Inject dependencies with `inject()` in field initialisers; do not use constructors for injection.",
+    "Use the `host: {}` object; never `@HostBinding` or `@HostListener`.",
+    "Use `input()`, `model()`, `output()`, `viewChild()`; do not use the decorator forms in new code.",
+    "Run zoneless with `provideZonelessChangeDetection()`; every value a template reads must be a signal.",
+    "Use `computed` or `linkedSignal` to derive state; use `effect()` only for side effects outside Angular.",
+    "Use `@if`, `@for` (always with `track`), `@switch`, `@empty`, `@defer`; never `*ngIf`, `*ngFor`, `ngClass` or `ngStyle`.",
+    "Keep templates free of logic beyond a condition; move the rest into a `computed`.",
+    "Keep presentational components free of stores and `HttpClient`; they take inputs and emit outputs.",
+    "Put pages in `type:feature` libraries and presentational components in `type:ui` libraries.",
+    "Add `data-testid` to interactive elements and to elements that tests assert on.",
+    "Use named exports and `loadComponent` with a `.then(m => m.XComponent)` for routed components.",
+    "Use utility classes and design tokens for styling; no hex colours and no per-component stylesheets.",
+    "Keep `@Injectable({ providedIn: 'root' })` for stateless services; put shared state in a signal store."
+   ]
+  },
+  {
+   "slug": "03-signal-store",
+   "title": "The signal store",
+   "blurb": "The shape of a store: the facade rule, one store per view, who provides it.",
+   "group": "State",
+   "diagram": "store",
+   "rules": [
+    "Make a `signalStore` the facade, API layer and state layer for its slice; components never inject `HttpClient` or a data service.",
+    "Never call `.subscribe()` in a component; use signals, resources or `rxMethod`.",
+    "Never add a `load()` method that a component must call after a filter changes; derive reads from state with resources.",
+    "Use one store per view (list, detail, form), provided by the component with `providers: [XStore]`.",
+    "Provide a feature store for shared reference data with `{ providedIn: 'root' }`; put cross-feature state in a library store.",
+    "Never let a feature import another feature's store.",
+    "Type state with an interface, name the starting value `initialState`, and expose `reset()` when the store outlives its page.",
+    "Change state only with `patchState`; never mutate arrays or objects in place.",
+    "Put derived values in `withComputed`; inject dependencies with `inject()` inside `withProps`, `withMethods` or `withHooks`.",
+    "Prefix private store members with `_` and expose a deliberate method when callers need them.",
+    "Reset `page` to 1 in every filter setter.",
+    "Never type a store as `any`.",
+    "Use `rxMethod` only when operators are needed; choose `switchMap`, `exhaustMap` or `concatMap` deliberately.",
+    "Persist state with `withStorageSync`, never with hand-written `localStorage` calls.",
+    "Give every store a spec."
+   ]
+  },
+  {
+   "slug": "04-data-access",
+   "title": "Data access",
+   "blurb": "Reading with resources, writing with mutations, and what a failed reload keeps.",
+   "group": "State",
+   "diagram": "resource",
+   "rules": [
+    "Read server data with resources derived from state (`httpResource` via `withResource`); never with a `load()` method.",
+    "Give every resource a `defaultValue` and `{ errorHandling: 'previous value' }`; never write `?.` or `??` on a resource value in a component.",
+    "Design pages for both failure cases: a failed reload keeps the last value, a failed changed request falls back to the `defaultValue`.",
+    "Keep a resource in its component only while one component uses it; move it into a store when a second needs it.",
+    "Fold several resource statuses into one with `apiStatus` so a page has one loading state and one error state.",
+    "Write with `withMutations` and `httpMutation`; never use `httpResource` for POST, PATCH, PUT or DELETE.",
+    "Reload the affected reads in a mutation's `onSuccess`.",
+    "Check the API's real verbs before choosing PUT or PATCH.",
+    "Never call an endpoint for a compile-time constant; keep it as a `const` in the model file.",
+    "Search the whole repository for other callers before deleting a frontend call or a backend route.",
+    "Implement cross-cutting HTTP behaviour as functional interceptors registered by one provider function.",
+    "Never let an interceptor match feature URLs; use an `HttpContext` token for exceptions.",
+    "Type backend errors once and show failures through translation keys."
+   ]
+  },
+  {
+   "slug": "05-toolkit",
+   "title": "The toolkit",
+   "blurb": "Which toolkit extensions to adopt, which to wait for, and which to avoid.",
+   "group": "State",
+   "diagram": "toolkit",
+   "rules": [
+    "Install `@ngrx-toolkit/core` for Angular 22 (`@angular-architects/ngrx-toolkit` for 21 and earlier), with the same major as Angular.",
+    "Use `withResource`, `withMutations`/`httpMutation`, `guardedDevtools`, `withMapper` and `withStorageSync` as the standard extensions.",
+    "Add `withImmutableState`, `withReset`, `withConditional`, `withUndoRedo` or `withCallState` only when a real need appears, and update the inventory in the same change.",
+    "Do not use `withDataService`, `withEntityResources`, `withPagination`, `withRedux`, `createEffects` or `withFeatureFactory`.",
+    "Use `withFeature` from `@ngrx/signals` instead of `withFeatureFactory`, and `patchState` from `@ngrx/signals` instead of the toolkit's.",
+    "Never call `withDevtools` directly; call `guardedDevtools(name, ...)` from one shared file.",
+    "Add `withMapper` to redact secret-shaped keys when a store's tracked state holds a full entity row.",
+    "Persist state with `withStorageSync` and a `select` that lists only what should survive a reload; place it right after `withState`."
+   ]
+  },
+  {
+   "slug": "06-custom-features",
+   "title": "Custom store features",
+   "blurb": "Writing your own store feature, and letting stores talk through events.",
+   "group": "State",
+   "diagram": "compose",
+   "rules": [
+    "Write a custom `signalStoreFeature` only after the same block has been copied between stores three times.",
+    "Use one `status` field (`idle | loading | success | error`) instead of separate `loading`, `error` and `loaded` flags in `rxMethod` stores.",
+    "Do not use `withRequestStatus` with resources or mutations; they already track their own status.",
+    "Declare what a feature needs from the store with `type<>()` as its first argument so the compiler checks order.",
+    "Connect a reusable feature to a store's own signals with `withFeature`, not `withFeatureFactory`.",
+    "Use `withLinkedState` or `linkedSignal` for state that follows other state instead of an `effect` that sets signals.",
+    "Use `signalMethod` for reactions that need no operators, and `rxMethod` when they do.",
+    "Never inject one store into another; coordinate stores with `@ngrx/signals/events` event groups."
+   ]
+  },
+  {
+   "slug": "07-forms-routing-i18n",
+   "title": "Forms, routing, translations and right-to-left",
+   "blurb": "Reactive Forms, lazy routes, translations, and layouts that flip for Arabic.",
+   "group": "Quality",
+   "diagram": "flip",
+   "rules": [
+    "Use Reactive Forms as the default; build validators and input directives in a shared library and reuse them.",
+    "Type every form control; use `nonNullable` controls.",
+    "Make validator error messages translation keys keyed by the error name.",
+    "Protect forms with unsaved changes with a `canDeactivate` guard.",
+    "Trim and reject unwanted markup in form input in code, and ignore a second submit while a request is pending.",
+    "Lazy-load every feature with `loadComponent` or `loadChildren`; keep one `<feature>.routes.ts` per feature.",
+    "Use `withComponentInputBinding()` and read route values through `input()`, not `ActivatedRoute`.",
+    "Put translation keys in route `title`; build guards with factory functions such as `createRoleGuard`.",
+    "Provide an entry for every key in every language file; keep keys camelCase and nested by feature.",
+    "Carry translation keys in stores, interceptors and services; translate only in templates.",
+    "Read the language signal inside a request that depends on language so it refetches on change.",
+    "Expose a `dir` computed from the language store and bind it on the root element.",
+    "Use logical properties (`ms-*`, `pe-*`, `text-start`, `start-*`), never physical left and right.",
+    "Mirror directional icons in right-to-left; do not mirror numerals, logos or code."
+   ]
+  },
+  {
+   "slug": "08-accessibility",
+   "title": "Accessibility",
+   "blurb": "Contrast you measure, keyboard and focus, meaning without colour.",
+   "group": "Quality",
+   "diagram": "contrast",
+   "rules": [
+    "Measure contrast with a function or tool; require 7:1 for small text, 4.5:1 for other text, and 3:1 for large text, icons, borders and focus rings.",
+    "Use brand colours only for fills, borders and large text; give small text a neutral token with a measured ratio.",
+    "Check light and dark themes separately.",
+    "Never let colour alone carry meaning; pair it with text, an icon or a pattern.",
+    "Mark invalid controls with `aria-invalid` and show the error as text.",
+    "Use native `<button>` and `<a>` for interactive elements; never a clickable `<div>`.",
+    "Keep focus visible with at least 3:1 contrast; never remove the outline without replacing it.",
+    "Move focus into a dialog on open, trap it while open, and return it on close; move focus to the heading after a route change.",
+    "Give every control an accessible name; prefer native elements over ARIA.",
+    "Announce dynamic errors and status changes with `role=\"alert\"` or `aria-live`.",
+    "Keep body text at 16px or more, touch targets at 44px or more, and honour `prefers-reduced-motion`.",
+    "Enable the Angular ESLint template accessibility rules and do not switch them off to ship."
+   ]
+  },
+  {
+   "slug": "09-testing",
+   "title": "Testing",
+   "blurb": "How to write a spec in seven steps, with fakes instead of stubs.",
+   "group": "Quality",
+   "diagram": "worlds",
+   "rules": [
+    "Test the real file with fakes for everything it injects; start every test from a fresh world.",
+    "Assert on behaviour (DOM, public signals, calls on fakes), never on private fields.",
+    "Never use `TestBed.configureTestingModule` directly, `{ provide, useValue }` for services, `HttpTestingController` or `as jest.Mock` in specs.",
+    "Import every test utility from `@/core/test`.",
+    "Fake services with `fakeService(X, () => ({ ... }))` in the factory form, at module level, one per `inject()`.",
+    "Fake only what the code uses, and match the real types so the fake cannot drift.",
+    "Fake HTTP, including `httpResource`, with `fakeHttp`; let unknown URLs fail loudly.",
+    "Satisfy every injection in the tree, including ones the code never calls.",
+    "Keep a root store real when it is plain state with no dependencies, and seed it through its own methods.",
+    "Write one top-level `describe` per world; use a new top-level describe with `options.providers` for anything a test cannot change through a fake.",
+    "Name tests as sentences, check one behaviour per `it`, and use `it.each` for variants of one check.",
+    "List the behaviours and branches before writing the spec.",
+    "Make test data `satisfies` the real model.",
+    "Give every store, service, guard and component a spec beside it.",
+    "Wait with `await view.whenStable()`; for stores flush effects and then settle the resource."
+   ]
+  },
+  {
+   "slug": "10-tooling",
+   "title": "Tooling",
+   "blurb": "pnpm, Nx, strict TypeScript, lint, format, commits and hooks.",
+   "group": "Quality",
+   "diagram": "pipeline",
+   "rules": [
+    "Use pnpm only, and run Nx through it (`pnpm nx ...`); use Nx generators and targets instead of `ng generate` and `ng build` in an Nx workspace.",
+    "Use `pnpm nx affected -t lint,test` for CI and pre-push checks.",
+    "Keep Angular and TypeScript at versions listed together on angular.dev/reference/versions; never move TypeScript ahead of Angular.",
+    "Enable `strict`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns` and `strictTemplates`; never disable a strict flag to pass a build.",
+    "Use an ESLint flat config with `@nx/enforce-module-boundaries`, `angular-eslint`, and the template accessibility rules.",
+    "Do not use `any`; if unavoidable, add an eslint-disable comment with the reason beside it.",
+    "Format with Prettier: 120 columns, single quotes, `trailingComma: all`, `arrowParens: avoid`, one attribute per line, imports sorted `@angular`, `rxjs`, third-party, relative.",
+    "Never raise formatting in review; let the pre-commit hook format.",
+    "Write Conventional Commits with an emoji and the project name as scope; enforce with commitlint.",
+    "Run lint-staged on pre-commit, commitlint on commit-msg, and build and test on pre-push.",
+    "Hold a global coverage threshold of 80% and give every new spec full coverage of its own file.",
+    "Commit an `AGENTS.md` at the root and in areas with their own rules; keep the root file short."
+   ]
+  },
+  {
+   "slug": "11-using-with-ai",
+   "title": "Using this guide with AI",
+   "blurb": "Installing the guide as a skill, a plugin, rules files or an MCP server.",
+   "group": "AI",
+   "diagram": "fan",
+   "rules": [
+    "Treat the generated AI files (everything in `ai/` except `ai/mcp/server.mjs`, plus `llms.txt`) as build output; change the chapter in `docs/` instead.",
+    "Put `AGENTS.md` at the project root and add project-specific overrides above the generated rules; the project wins over the guide.",
+    "Keep agent instructions as one-sentence imperative rules with a task-to-chapter map and a reference file per pattern.",
+    "State where project rules override framework defaults, and back rules with lint rules or types where possible."
+   ]
+  }
+ ]
+}

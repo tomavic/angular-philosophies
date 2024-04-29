@@ -1,0 +1,25 @@
+---
+description: Angular Philosophies, Testing. How to write a spec in seven steps with fakes instead of stubs, and the test toolkit to copy.
+globs: **/*.spec.ts
+alwaysApply: false
+---
+
+# Testing
+
+- Test the real file with fakes for everything it injects; start every test from a fresh world.
+- Assert on behaviour (DOM, public signals, calls on fakes), never on private fields.
+- Never use `TestBed.configureTestingModule` directly, `{ provide, useValue }` for services, `HttpTestingController` or `as jest.Mock` in specs.
+- Import every test utility from `@/core/test`.
+- Fake services with `fakeService(X, () => ({ ... }))` in the factory form, at module level, one per `inject()`.
+- Fake only what the code uses, and match the real types so the fake cannot drift.
+- Fake HTTP, including `httpResource`, with `fakeHttp`; let unknown URLs fail loudly.
+- Satisfy every injection in the tree, including ones the code never calls.
+- Keep a root store real when it is plain state with no dependencies, and seed it through its own methods.
+- Write one top-level `describe` per world; use a new top-level describe with `options.providers` for anything a test cannot change through a fake.
+- Name tests as sentences, check one behaviour per `it`, and use `it.each` for variants of one check.
+- List the behaviours and branches before writing the spec.
+- Make test data `satisfies` the real model.
+- Give every store, service, guard and component a spec beside it.
+- Wait with `await view.whenStable()`; for stores flush effects and then settle the resource.
+
+Full chapter: https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/09-testing.md

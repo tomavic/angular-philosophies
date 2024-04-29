@@ -1,0 +1,18 @@
+---
+description: Angular Philosophies, The toolkit. Which @ngrx-toolkit/core extensions to adopt, which to wait for, and which to avoid, plus guarded devtools and storage sync.
+globs: **/*.store.ts
+alwaysApply: false
+---
+
+# The toolkit
+
+- Install `@ngrx-toolkit/core` for Angular 22 (`@angular-architects/ngrx-toolkit` for 21 and earlier), with the same major as Angular.
+- Use `withResource`, `withMutations`/`httpMutation`, `guardedDevtools`, `withMapper` and `withStorageSync` as the standard extensions.
+- Add `withImmutableState`, `withReset`, `withConditional`, `withUndoRedo` or `withCallState` only when a real need appears, and update the inventory in the same change.
+- Do not use `withDataService`, `withEntityResources`, `withPagination`, `withRedux`, `createEffects` or `withFeatureFactory`.
+- Use `withFeature` from `@ngrx/signals` instead of `withFeatureFactory`, and `patchState` from `@ngrx/signals` instead of the toolkit's.
+- Never call `withDevtools` directly; call `guardedDevtools(name, ...)` from one shared file.
+- Add `withMapper` to redact secret-shaped keys when a store's tracked state holds a full entity row.
+- Persist state with `withStorageSync` and a `select` that lists only what should survive a reload; place it right after `withState`.
+
+Full chapter: https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/05-toolkit.md

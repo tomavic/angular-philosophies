@@ -1,0 +1,1592 @@
+# Angular Philosophies (full text)
+
+Source: https://github.com/tomavic/angular-philosophies. Every chapter follows, in order. Code in templates/ is linked from the chapters.
+
+---
+
+# Philosophy
+
+This is how I write Angular apps, written down so a team, a new hire or an AI agent can write them the same way. It
+targets Angular 22 with TypeScript 6.0, zoneless, signals everywhere, NgRx SignalStore for state, and an Nx workspace
+split by business domain.
+
+It is a set of defaults, not a law. Every rule comes with the reason behind it, so you can tell when your situation is
+different enough to break one.
+
+## Code is a necessary evil
+
+Every line you write is a line someone reads, tests, upgrades and eventually deletes. The best change is the one you
+didn't have to make, and the second best is the smallest one that works.
+
+- **Build what is needed today.** YAGNI is the most useful rule I know. A flag, a config option or an abstraction for
+  a case that might come later usually costs more than adding it later, because later you know what the case really is.
+- **Don't be clever.** Clever code is read at 3am by someone who didn't write it. Boring and obvious wins.
+- **Think before adding a dependency.** If the platform does it, use the platform. Angular 22 already ships
+  `httpResource`, signal inputs, `linkedSignal`, a router, forms and a control flow syntax. Reach for a library when
+  the problem is real, not when the tutorial used one.
+- **Delete before you add.** Removing unused code, an old wrapper or a flag nobody sets is progress.
+- **Write an abstraction the third time, not the first.** Two copies are cheaper than the wrong shared function. This
+  is also how the custom store features in [06-custom-features.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/06-custom-features.md) are meant to appear.
+
+## Leave it better than you found it
+
+When you touch a file, fix the small smell next to your change or leave a `TODO` with a reason. Don't start a rewrite
+inside a feature branch. Refactor in small steps with the tests green, and make the next person's change easier than yours
+was.
+
+## One place for each thing
+
+Most arguments about structure go away when each kind of code has exactly one home:
+
+- Server state, API calls and the facade a page talks to live in a **signal store**.
+- A page's markup and its wiring live in a **component**.
+- Anything two features need lives in a **library** with a tag that says what it may depend on.
+- A rule a machine can check is a **lint rule**, not a paragraph in a wiki.
+
+[01-architecture.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/01-architecture.md) and [03-signal-store.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/03-signal-store.md) are these ideas made specific.
+
+## Make the right thing the easy thing
+
+Conventions only survive if following them is less work than ignoring them. That is why this repo ships templates (a
+store, a test toolkit, config files) and AI instructions as well as prose. Copy the template, change the names, and you
+are already following the guide.
+
+## Accessibility and Arabic are not extras
+
+A page that can't be used with a keyboard, or can't be read at arm's length, is not finished. A layout that breaks in
+right-to-left is not finished either. Both are cheap to do from the first commit and expensive to retrofit, so they are
+part of the defaults. See [07-forms-routing-i18n.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/07-forms-routing-i18n.md) and [08-accessibility.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/08-accessibility.md).
+
+## How to read the rest
+
+Each chapter ends with a short list of rules. The text explains the why; the rules are what a linter, a reviewer or
+an AI agent checks. If a rule and the text disagree, the rule is the bug, so open an issue.
+
+| Chapter | What it settles |
+| --- | --- |
+| [01 Architecture](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/01-architecture.md) | How the workspace is divided and what may import what |
+| [02 Components](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/02-components.md) | How a component, a template and a file are written |
+| [03 Signal store](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/03-signal-store.md) | The shape of every store and who provides it |
+| [04 Data access](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/04-data-access.md) | Reading, writing, errors and interceptors |
+| [05 Toolkit](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/05-toolkit.md) | Which `@ngrx-toolkit/core` features to use and which to leave |
+| [06 Custom features](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/06-custom-features.md) | Writing your own `signalStoreFeature` |
+| [07 Forms, routing, i18n](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/07-forms-routing-i18n.md) | Forms, lazy routes, translations, RTL |
+| [08 Accessibility](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/08-accessibility.md) | Contrast, focus, keyboard, meaning without colour |
+| [09 Testing](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/09-testing.md) | How to write a spec, with a toolkit to copy |
+| [10 Tooling](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/10-tooling.md) | pnpm, Nx, ESLint, Prettier, commits |
+| [11 Using with AI](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/11-using-with-ai.md) | Skill, plugin, `llms.txt`, `AGENTS.md`, Cursor rules, MCP |
+
+## Rules
+
+<!-- rules -->
+- Build only what the current task needs; do not add flags, options or abstractions for hypothetical cases.
+- Prefer the Angular platform (`httpResource`, signal APIs, router, forms) over a new dependency.
+- Write a shared abstraction the third time the same code appears, not the first.
+- When touching a file, fix nearby smells or leave a `TODO` with a reason; never rewrite inside a feature branch.
+- Express every rule a machine can check as a lint rule or a type, not as documentation.
+- Treat accessibility and right-to-left support as part of "done", not as follow-up work.
+<!-- /rules -->
+
+---
+
+# Architecture
+
+A large Angular app stays maintainable when it is cut into domains and layers that a tool, not a person, keeps in
+order. The examples use a small shop with two business domains, `orders` and `billing`, plus `shared` code.
+
+## The workspace
+
+```
+apps/
+  storefront/                  the Angular app: routes, providers, one folder per feature
+libs/
+  orders/                      scope:orders
+    data-access/               stores and API services          type:data-access
+    feature/checkout/          a full page with its own store   type:feature
+    ui/                        presentational components        type:ui
+    util/                      pure functions                   type:util
+  billing/                     scope:billing, same layout
+  shared/                      scope:shared: nothing business-specific lives here
+    ui/  util/  core/  testing/
+```
+
+Libraries are split by **type** inside a **domain**. A new business concept gets a domain folder; it does not get a new
+top-level layout.
+
+## Tags: two per library
+
+Every library has exactly one `scope` tag (who owns it) and one `type` tag (what kind of code it is), set in its
+`project.json`:
+
+| Tag | Meaning |
+| --- | --- |
+| `scope:orders`, `scope:billing` | Belongs to that business domain |
+| `scope:shared` | Generic, usable by any domain, never imports a domain |
+| `scope:app` | An application, which may use every scope |
+| `type:util` | Pure functions. No Angular injection, no services |
+| `type:data-access` | Signal stores and HTTP services |
+| `type:core` | Angular infrastructure: providers, interceptors, guards, models |
+| `type:ui` | Presentational components: inputs and outputs only |
+| `type:feature` | Smart components: a routed page with its own store |
+| `type:shell` | The layout that mounts features, used only by an app |
+| `type:testing` | Test helpers, imported by specs only |
+
+## Dependencies flow down
+
+A library may import only from the layers below it. `@nx/enforce-module-boundaries` turns that into a build error, so
+nobody has to remember it.
+
+```
+type:shell        mounts features, used only by an app
+type:feature      pages
+type:ui           presentational components
+type:core         providers, interceptors, guards, models
+type:data-access  stores, API services
+type:util         pure functions
+```
+
+Scope follows the same logic: a domain may import itself and `shared`, `shared` imports only `shared`, and a domain
+never imports another domain. If `billing` needs something from `orders`, it is either shared code in the wrong place or
+a sign the two should talk through an event (see [06-custom-features.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/06-custom-features.md)). The complete lint
+configuration is in [templates/config/eslint.boundaries.js](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/config/eslint.boundaries.js).
+
+Two details come from running this in production:
+
+- `type:data-access` may import `type:core`, because stores need the HTTP configuration and error types. The reverse is
+  forbidden: core never imports a store.
+- `util` libraries accept what they need as parameters. A date helper takes the language as an argument instead of
+  injecting a language service, which keeps it testable without Angular.
+
+## Where does new code go
+
+| You are adding | Put it in |
+| --- | --- |
+| A store or API service for a domain | `libs/<domain>/data-access` |
+| A page with its own store | `libs/<domain>/feature/<name>` |
+| A component two features reuse | `libs/<domain>/ui`, or `libs/shared/ui` if it knows no domain |
+| A type shared across libs | `libs/shared/core` (models) |
+| An HTTP interceptor | `libs/shared/core`, in an `interceptors` entry point |
+| A route guard | `libs/shared/core` for generic ones, the domain's `data-access` for domain ones |
+| A pure date, string or number helper | `libs/shared/util` |
+| A test helper | `libs/shared/testing` |
+| Code used by one feature only | **Inside that feature.** Do not create a library yet |
+
+The last row matters most. **Code stays in the app until a second consumer appears, then it is promoted to a
+library.** Promoting early produces libraries with one user and a public API nobody needed.
+
+## Entry points and public APIs
+
+Split a library with Angular secondary entry points when it holds distinct parts (`@shop/shared/core/models`,
+`@shop/shared/core/interceptors`), not with more libraries. Each entry has its own `index.ts`, and:
+
+- Export by name. Do not `export *` runtime code, only types, so the public surface stays deliberate.
+- Import through the path alias (`@shop/orders/data-access`), never through a relative `../../` path.
+- Inside the app, `@/*` points at `src/app/*`, so a feature imports its neighbours the same way.
+
+Nx boundaries only apply between projects, not between entry points inside one project. When two entries of one library
+must never import each other, add a `no-restricted-imports` rule to that library's own ESLint config. A guest checkout
+and a signed-in checkout inside one `checkout` library are the typical case: they share a domain and must not share
+code that depends on a session.
+
+When both sides need the same piece, choose in this order:
+
+1. **Reuse** what does not depend on the session or the domain: `shared/ui`, `shared/util`.
+2. **Promote, then reuse** when it can work through inputs and outputs only, with no store and no session.
+3. **Duplicate** when sharing it would need an `if (guest)` flag. Two small copies that can change independently are
+   cheaper than one function with a mode switch.
+
+## Naming
+
+| Thing | Convention | Example |
+| --- | --- | --- |
+| Nx project | `<scope>-<type>-<name>` | `orders-data-access` |
+| Path alias | `@<workspace>/<scope>/<type>` | `@shop/orders/data-access` |
+| Component file | `<name>.component.ts` + `.component.html` | `order-list.component.ts` |
+| Store, service, model | `<name>.store.ts`, `.service.ts`, `.model.ts` | `order-list.store.ts` |
+| Routes, guard | `<feature>.routes.ts`, `<name>.guard.ts` | `checkout.routes.ts` |
+| Spec | beside its source, `<file>.spec.ts` | `order-list.store.spec.ts` |
+| Selector | `app-` prefix, kebab-case | `app-order-list` |
+
+## Rules
+
+<!-- rules -->
+- Give every library exactly one `scope:*` tag and one `type:*` tag in its `project.json`.
+- Enforce module boundaries with `@nx/enforce-module-boundaries`; dependencies flow only downward through util, data-access, core, ui, feature, shell.
+- Never let a domain import another domain, and never let `scope:shared` import a domain.
+- Keep code inside the app feature until a second consumer exists; then promote it to a library.
+- Split a library with secondary entry points, not with extra libraries.
+- Export by name from each `index.ts`; do not `export *` runtime code.
+- Import through path aliases (`@shop/...`, `@/...`); never use `../../` across feature or library boundaries.
+- Make `type:util` code free of Angular injection; pass language and configuration as parameters.
+- Forbid sibling entry points from importing each other with `no-restricted-imports` in the library's own ESLint config.
+- Duplicate small code instead of adding an `if (guest)`-style mode flag to a shared function.
+- Name files `<name>.component.ts`, `<name>.store.ts`, `<name>.service.ts`, `<name>.model.ts`, `<feature>.routes.ts`, and keep each spec beside its source.
+<!-- /rules -->
+
+---
+
+# Components
+
+Angular 22 removed most of the ceremony. A component is a class with a template, and the defaults are the ones you want:
+standalone, `OnPush`, and no zone. Write the least that works.
+
+## What a component looks like
+
+```ts
+@Component({
+  selector: 'app-order-list',
+  templateUrl: './order-list.component.html',
+  providers: [OrderListStore],
+  host: { class: 'block p-4' },
+})
+export class OrderListComponent {
+  protected readonly store = inject(OrderListStore);
+  protected readonly statuses = ORDER_STATUS_OPTIONS;
+}
+```
+
+The full file and its template are in [templates/signal-store/](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/order-list.component.ts). Notice
+what is missing:
+
+- **No `standalone: true`.** It is the default.
+- **No `changeDetection: OnPush`.** In Angular 22 `OnPush` is the default (`ChangeDetectionStrategy.Eager` is the opt-out).
+  Don't edit old files only to remove it, but don't add it to new ones.
+- **No constructor.** Dependencies come from `inject()` in field initialisers.
+- **No `@HostBinding` or `@HostListener`.** Use the `host: {}` object.
+- **No `NgModule`, no `CommonModule`, no `ngClass`, no `ngStyle`.** Bind `[class.active]` and `[style.width.px]`.
+- **No `ngOnInit` for loading data.** Reads are resources derived from state, see [04-data-access.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/04-data-access.md).
+
+## Zoneless
+
+Apps run with `provideZonelessChangeDetection()` and no `zone.js`. Change detection runs when a signal read by a
+template changes, an event handler runs, or `markForCheck` is called. In practice that means one rule: **state a template
+reads must be a signal.** A plain field that you mutate will not update the screen.
+
+## Signals, all the way
+
+| Need | Use |
+| --- | --- |
+| An input | `input()` or `input.required<T>()` |
+| Two-way binding | `model()` |
+| An output | `output<T>()` |
+| A query | `viewChild()`, `contentChildren()` |
+| Local state | `signal()` |
+| Derived state | `computed()` |
+| State that follows another signal but stays writable | `linkedSignal()` |
+| Shared or page state | a signal store, see [03-signal-store.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/03-signal-store.md) |
+
+Keep `effect()` for side effects that leave Angular (writing to `localStorage`, calling a third-party widget). If you are
+using an effect to set a signal from another signal, you wanted `computed` or `linkedSignal`.
+
+## Templates
+
+- Use `@if`, `@for` and `@switch`. `@for` always has a `track`, and `track item.id` beats `track $index` when items have ids.
+- Use `@empty` for the empty list, and `@defer` for heavy parts below the fold.
+- No logic in templates beyond a condition or a call to a signal. Put the rest in a `computed`.
+- Use `NgOptimizedImage` for static images.
+- Put a `data-testid` on interactive elements and on the elements tests assert on. See [09-testing.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/09-testing.md).
+- Use `@let` for a value you read three times in one template.
+
+## Pages and presentational components
+
+Two kinds of component, kept apart:
+
+- **Page (smart).** Routed or a feature root. Provides its store, injects it, passes data down. Lives in a `type:feature` library.
+- **Presentational (dumb).** Inputs and outputs only. It never injects a store or `HttpClient`, so it can be reused and tested
+  with `render(Component, [], { inputs })`. Lives in a `type:ui` library.
+
+A component that needs both is a page that contains a presentational component. Split it.
+
+## Files and naming
+
+- `order-list.component.ts`, `order-list.component.html`, `order-list.component.spec.ts`, side by side.
+- The class is `OrderListComponent`, matching the file name. Selectors use the `app-` prefix.
+- The template lives in its own `.html` file. Inline a template only when it is a few lines and has no logic.
+- Styling uses utility classes and design tokens. No per-component stylesheets, no hex colours, no arbitrary pixel values.
+- Named exports. A routed component is loaded with `loadComponent: () => import('./order-list.component').then(m => m.OrderListComponent)`.
+
+## Services
+
+A service that holds no state and does one job is a plain `@Injectable({ providedIn: 'root' })` class. Anything with state
+that a page shares is a store, not a service. Angular 22 also ships a `@Service()` decorator; this guide keeps
+`@Injectable` for now because every tool and library in the ecosystem understands it.
+
+## Rules
+
+<!-- rules -->
+- Write components as standalone without `standalone: true`, and without `changeDetection` (OnPush is the Angular 22 default).
+- Inject dependencies with `inject()` in field initialisers; do not use constructors for injection.
+- Use the `host: {}` object; never `@HostBinding` or `@HostListener`.
+- Use `input()`, `model()`, `output()`, `viewChild()`; do not use the decorator forms in new code.
+- Run zoneless with `provideZonelessChangeDetection()`; every value a template reads must be a signal.
+- Use `computed` or `linkedSignal` to derive state; use `effect()` only for side effects outside Angular.
+- Use `@if`, `@for` (always with `track`), `@switch`, `@empty`, `@defer`; never `*ngIf`, `*ngFor`, `ngClass` or `ngStyle`.
+- Keep templates free of logic beyond a condition; move the rest into a `computed`.
+- Keep presentational components free of stores and `HttpClient`; they take inputs and emit outputs.
+- Put pages in `type:feature` libraries and presentational components in `type:ui` libraries.
+- Add `data-testid` to interactive elements and to elements that tests assert on.
+- Use named exports and `loadComponent` with a `.then(m => m.XComponent)` for routed components.
+- Use utility classes and design tokens for styling; no hex colours and no per-component stylesheets.
+- Keep `@Injectable({ providedIn: 'root' })` for stateless services; put shared state in a signal store.
+<!-- /rules -->
+
+---
+
+# The signal store
+
+NgRx SignalStore is the centre of this guide. It gives a page one object with its state, its derived values, its API calls
+and its actions, built from small features that compose. Everything here targets `@ngrx/signals` 22.
+
+## The rule
+
+**A `signalStore` is the facade, the API layer and the state layer for its slice.** It is not a plain service next to a
+store next to some `.subscribe()` wiring. From that follow three consequences:
+
+- Components inject a store and read signals. They never inject `HttpClient` or a data service.
+- Components never `.subscribe()`. Anything reactive is a signal, a resource or an `rxMethod`.
+- Components never call a `load()` method after a filter changes. Reads are resources derived from state, so changing the
+  filter signal changes the request. See [04-data-access.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/04-data-access.md).
+
+## One store per view
+
+When a feature has a list, a detail page and a form, each page gets its own store:
+
+```
+orders/
+  order.model.ts          types and static option lists. No store, no injection
+  order.store.ts          feature store: reference data every view needs, providedIn: 'root'
+  order-list/
+    order-list.store.ts   view store, provided by the component
+    order-list.component.ts
+    order-list.component.html
+  order-form/
+    order-form.store.ts   view store, provided by the component
+    ...
+```
+
+Do not merge list state and form state because they belong to the same feature. Each view owns its filters, paging, dialog
+state and its own reads and writes.
+
+| Store | Provided | Why |
+| --- | --- | --- |
+| Feature store (reference data, lookups) | `{ providedIn: 'root' }` | Stable for the session and shared by every view, so it is fetched once |
+| View store (list, detail, form) | `providers: [OrderListStore]` on the component | Filters, paging and dialog state must reset when the user leaves, not leak into the next visit |
+| Cross-feature state (auth, layout) | a library store, `providedIn: 'root'` | Owned by a library, never by one feature |
+
+State shared by two features belongs in a library store. A feature must never reach into another feature's store.
+
+## The shape of a store
+
+The full file is [templates/signal-store/order-list.store.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/order-list.store.ts). The skeleton:
+
+```ts
+interface OrderListState {
+  page: number;
+  search: string;
+  status: OrderStatus | null;
+}
+
+const initialState: OrderListState = { page: 1, search: '', status: null };
+
+export const OrderListStore = signalStore(
+  guardedDevtools('orderList'),
+  withState(initialState),
+  withProps(...),       // injected services, debounced signals, private helpers
+  withResource(...),    // reads
+  withMutations(...),   // writes
+  withComputed(...),    // derived values
+  withMethods(...),     // actions
+);
+```
+
+The order is deliberate. Each feature can use what the ones above it added, so state comes first and methods last.
+
+- **Type the state** with an interface and name the starting value `initialState`. A store that outlives its page also
+  exposes `reset()`, which is `patchState(store, initialState)`.
+- **Change state only with `patchState`.** Never mutate an array or an object in place; replace it.
+- **Put derived values in `withComputed`**, not in methods and not in the template.
+- **Inject with `inject()` inside `withProps`, `withMethods` or `withHooks`.** A store has no constructor.
+- **Prefix private members with `_`.** Underscore-prefixed state, props and methods are not exposed on the store instance, so
+  `_debouncedSearch` and `_listReload` stay inside the store. Expose a deliberate method (`refresh()`) when callers need it.
+- **Reset the page when a filter changes.** Every filter setter patches `page: 1` in the same call, because a filter applied
+  on page 5 can leave you past the last page.
+- **Never type a store as `any`.** If declaration emit complains in a library, export an interface for the public surface.
+
+## Commands that are not plain requests
+
+A search that must not overlap itself, or a command with several steps, is better as an `rxMethod`:
+
+```ts
+search: rxMethod<string>(
+  pipe(
+    tap(() => store.setLoading()),
+    exhaustMap(q =>
+      http.get<Page<Product>>('/api/products', { params: { q } }).pipe(
+        tapResponse({
+          next: ({ items }) => patchState(store, { products: items }),
+          error: () => store.setError('search-failed'),
+        }),
+      ),
+    ),
+  ),
+),
+```
+
+Choose the flattening operator on purpose: `switchMap` for a search where only the latest matters, `exhaustMap` for a submit
+that must not run twice, `concatMap` when order matters. The complete store is
+[product-search.store.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/product-search.store.ts). It also shows `setLoading` and `setError`,
+which come from the custom feature in [06-custom-features.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/06-custom-features.md).
+
+Reach for `rxMethod` when you need operators. A request derived from state is a resource, and a plain command is a mutation.
+
+## State that survives a reload
+
+Persist with `withStorageSync`, never with hand-written `localStorage.getItem` calls. See
+[05-toolkit.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/05-toolkit.md) and [layout.store.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/layout.store.ts), which persists only the
+theme and the language and leaves `sidebarCollapsed` alone.
+
+## Testing a store
+
+A store spec injects the store with a fake `HttpClient`, drives it through its public methods and asserts on its signals.
+The complete example is
+[order-list.store.spec.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/testing/examples/order-list.store.spec.ts), and [09-testing.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/09-testing.md)
+explains the toolkit it uses. Every store gets a spec.
+
+## Rules
+
+<!-- rules -->
+- Make a `signalStore` the facade, API layer and state layer for its slice; components never inject `HttpClient` or a data service.
+- Never call `.subscribe()` in a component; use signals, resources or `rxMethod`.
+- Never add a `load()` method that a component must call after a filter changes; derive reads from state with resources.
+- Use one store per view (list, detail, form), provided by the component with `providers: [XStore]`.
+- Provide a feature store for shared reference data with `{ providedIn: 'root' }`; put cross-feature state in a library store.
+- Never let a feature import another feature's store.
+- Type state with an interface, name the starting value `initialState`, and expose `reset()` when the store outlives its page.
+- Change state only with `patchState`; never mutate arrays or objects in place.
+- Put derived values in `withComputed`; inject dependencies with `inject()` inside `withProps`, `withMethods` or `withHooks`.
+- Prefix private store members with `_` and expose a deliberate method when callers need them.
+- Reset `page` to 1 in every filter setter.
+- Never type a store as `any`.
+- Use `rxMethod` only when operators are needed; choose `switchMap`, `exhaustMap` or `concatMap` deliberately.
+- Persist state with `withStorageSync`, never with hand-written `localStorage` calls.
+- Give every store a spec.
+<!-- /rules -->
+
+---
+
+# Data access
+
+How a page reads from the server, writes to it, and shows what went wrong. The tools are `httpResource` for reads,
+`httpMutation` for writes, functional interceptors for everything cross-cutting, and signals for the result.
+
+## Reads: resources derived from state
+
+A read is a resource whose request is computed from signals. When a signal the request reads changes, the resource
+refetches by itself. Nobody calls `load()`.
+
+```ts
+withResource(
+  store => ({
+    list: httpResource<Page<Order>>(
+      () => ({ url: '/api/orders', params: { page: store.page(), ...(store.status() ? { status: store.status()! } : {}) } }),
+      { defaultValue: EMPTY_PAGE },
+    ),
+  }),
+  { errorHandling: 'previous value' },
+),
+```
+
+`withResource` comes from `@ngrx-toolkit/core` and is marked `@experimental` in v22. A named resource adds
+`listValue()`, `listStatus()`, `listError()`, `listIsLoading()` and a private `_listReload()` to the store. A component
+reads those signals and nothing else.
+
+Two things go on every resource, and neither is optional:
+
+- **A `defaultValue`.** Without one the value type is `T | undefined`, and every consumer needs a `?.` or a `??`.
+- **`errorHandling: 'previous value'`.** The default (`'undefined value'`) widens the type the same way.
+
+Together they keep the value non-nullable end to end, so `store.listValue().items` is always an array. If you find
+yourself writing `?.` on a resource value in a component, the store is missing one of the two. Fix the store.
+
+### What "previous value" does and does not keep
+
+This is worth knowing exactly, because it is easy to assume more than it does.
+
+| Situation | What `listValue()` holds |
+| --- | --- |
+| A reload of the same request fails (`refresh()`) | The last good value. `listError()` is set, so the page can say the data is stale |
+| A changed filter or page starts a new request and it fails | The `defaultValue`. A new request is not a reload, so there is no previous value to keep |
+
+Both are covered by tests in [order-list.store.spec.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/testing/examples/order-list.store.spec.ts). Design the
+page for both: show the stale list with a "try again" button after a failed reload, and show the empty state plus an error
+after a failed filter.
+
+### A read that only one component needs
+
+A resource used by one component and nothing else can live in the component with plain `httpResource`. Move it into a store
+when a second component needs the result or the call becomes a command. A page reading several resources folds their
+statuses into one with [`apiStatus`](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/api-status.ts), so the template has a single skeleton and a
+single error state:
+
+```ts
+protected readonly status = apiStatus(this.orders.status, this.stats.status);
+```
+
+## Writes: mutations, not resources
+
+`httpResource` is for GET. Every POST, PATCH, PUT and DELETE is an `httpMutation`:
+
+```ts
+withMutations(store => ({
+  cancel: httpMutation({
+    request: (id: number) => ({ url: `/api/orders/${id}/cancel`, method: 'POST', body: {} }),
+    onSuccess: () => store._listReload(),
+  }),
+})),
+```
+
+Each mutation exposes `cancelIsPending()`, `cancelStatus()`, `cancelError()`, and the method itself returns a promise of a
+result, so a component can `await store.cancel(id)` and branch on the status. Check the API's real verbs first: if it has
+no `PUT`, a save is `PATCH` when an id exists and `POST` when it doesn't, and one mutation can pick between them in its
+`request` function.
+
+A successful write reloads the reads it affected, inside `onSuccess`, so the list and the stats never disagree.
+
+## Don't fetch what you already know
+
+If an endpoint returns a compile-time constant (the values of an enum, a fixed list of options), do not call it. Put the
+constant in the model file (`ORDER_STATUS_OPTIONS`) and use it. The endpoint can keep existing for other consumers; stopping
+one call is not a reason to delete a route. Search the whole repository for other callers before removing either side.
+
+## Interceptors
+
+Cross-cutting HTTP behaviour lives in functional interceptors, registered once, in order, by a single provider function
+such as `provideShopInterceptors()`:
+
+| Interceptor | Job |
+| --- | --- |
+| API prefix | Adds the base URL from configuration |
+| Clean query params | Drops empty and `undefined` params so a store doesn't have to |
+| Accept-Language | Sends the current language, so a language change refetches in the right one |
+| Response unwrap | Unwraps a `{ data }` envelope if the backend uses one |
+| Error | Turns a failed request into a typed error and a toast |
+| Unauthorised | Sends a 401 to the login page and clears the session |
+
+Anything that needs an exception, such as a guest flow that must not send credentials, asks for it with an `HttpContext`
+token (`GUEST_REQUEST`) that the interceptor reads. The interceptor never matches feature URLs, because then the core
+library would know about its features.
+
+## Errors
+
+- Backend errors are typed once (`ApiError`, `ApiErrorResult` in the core models) and mapped by the error interceptor.
+- A failed read shows an error state with a retry that calls the store's `refresh()`. A failed write shows a toast or an
+  inline message, chosen by where the user is looking.
+- Translate the message. Interceptors and stores carry translation keys, and the template translates them.
+- Track `status` and `error` in state for commands built with `rxMethod`; resources and mutations track their own.
+
+## Rules
+
+<!-- rules -->
+- Read server data with resources derived from state (`httpResource` via `withResource`); never with a `load()` method.
+- Give every resource a `defaultValue` and `{ errorHandling: 'previous value' }`; never write `?.` or `??` on a resource value in a component.
+- Design pages for both failure cases: a failed reload keeps the last value, a failed changed request falls back to the `defaultValue`.
+- Keep a resource in its component only while one component uses it; move it into a store when a second needs it.
+- Fold several resource statuses into one with `apiStatus` so a page has one loading state and one error state.
+- Write with `withMutations` and `httpMutation`; never use `httpResource` for POST, PATCH, PUT or DELETE.
+- Reload the affected reads in a mutation's `onSuccess`.
+- Check the API's real verbs before choosing PUT or PATCH.
+- Never call an endpoint for a compile-time constant; keep it as a `const` in the model file.
+- Search the whole repository for other callers before deleting a frontend call or a backend route.
+- Implement cross-cutting HTTP behaviour as functional interceptors registered by one provider function.
+- Never let an interceptor match feature URLs; use an `HttpContext` token for exceptions.
+- Type backend errors once and show failures through translation keys.
+<!-- /rules -->
+
+---
+
+# The toolkit
+
+`@ngrx-toolkit/core` adds extensions on top of `@ngrx/signals`: resources, mutations, devtools, storage sync and more. It
+ships more than most features need, and every extension is a thing a reader has to learn. This chapter says what is
+adopted, what is available but not yet needed, and what to avoid.
+
+## Install
+
+```bash
+pnpm add @ngrx/signals @ngrx-toolkit/core
+```
+
+Starting with version 22 the package is **`@ngrx-toolkit/core`**. Version 21 and earlier were published as
+`@angular-architects/ngrx-toolkit`. Match its major to your Angular major; v22 needs `@angular/core` 22, `@ngrx/signals` 22
+and `@ngrx/store` 22 as peers.
+
+## Inventory
+
+**Adopted.** These are part of the standard store:
+
+| Extension | Use |
+| --- | --- |
+| `withResource` | Reads, derived from state. See [04-data-access.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/04-data-access.md) |
+| `withMutations`, `httpMutation` | Writes. `rxMutation` for a write that is not a plain HTTP call |
+| `withDevtools`, `withDevToolsStub` | Only through `guardedDevtools`, below |
+| `withMapper` | Redacting sensitive keys before they reach devtools |
+| `withStorageSync` | Persisting part of a store to `localStorage` or `sessionStorage` |
+
+**Available, add when a real need shows up.** Don't add these speculatively:
+
+| Extension | Add it when |
+| --- | --- |
+| `withImmutableState` | A store mutated outside `patchState` caused a real bug. It throws in dev mode on such a mutation |
+| `withReset` | A store needs a `resetState()` and the hand-written `reset()` has become repetitive |
+| `withConditional` | You must swap between two feature sets of the same shape by a condition |
+| `withUndoRedo` | A screen offers undo and redo |
+| `withCallState` | A store is built on `rxMethod` and repeats `loading` and `error` flags. Resources and mutations already track their own status. See [06-custom-features.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/06-custom-features.md) for a smaller version |
+
+**Leave alone.** These solve a shape of problem this guide avoids:
+
+| Extension | Why not |
+| --- | --- |
+| `withDataService`, `withEntityResources` | Both assume the endpoint returns a bare array. A paginated envelope (`{ items, total }`) doesn't fit; use `withResource` |
+| `withPagination` | Client-side paging of a collection that is already loaded. Server-side paging doesn't need it |
+| `withRedux`, `createEffects` | A reducer and effects layer that this guide's facade rule exists to avoid. The toolkit's own docs mark `createEffects` deprecated in favour of `@ngrx/signals/events`. See [06-custom-features.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/06-custom-features.md) |
+| `withFeatureFactory` | Deprecated. Use `withFeature` from `@ngrx/signals` |
+| `patchState` from the toolkit | Deprecated alias of `updateState`. Use `patchState` from `@ngrx/signals` |
+
+If you add an extension that is not marked adopted, update this table in the same change. The inventory is what stops the
+toolkit from slowly becoming the whole architecture.
+
+## Devtools, never raw
+
+`withDevtools` connects to the Redux DevTools browser extension unconditionally. It does not check `isDevMode()`. A raw
+`withDevtools()` call therefore ships to production, where anyone with the extension installed can read that store's
+state. Every store goes through one wrapper:
+
+```ts
+import { isDevMode } from '@angular/core';
+import { DevtoolsFeature, withDevToolsStub, withDevtools } from '@ngrx-toolkit/core';
+
+export function guardedDevtools(name: string, ...features: DevtoolsFeature[]) {
+  return isDevMode() ? withDevtools(name, ...features) : withDevToolsStub(name, ...features);
+}
+```
+
+`withDevToolsStub` is the toolkit's own mechanism for this: it never touches the devtools connection. Keep one copy of the
+wrapper in a shared `util` or `core` library, and grep for `withDevtools(` before merging. It should only appear inside
+that file. The file is [guarded-devtools.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/guarded-devtools.ts).
+
+When a store's tracked state holds a full entity row, also pass `withMapper` and redact any password-, token- or
+secret-shaped key before it reaches devtools. That is defence in depth on top of the server not sending those fields. A
+store that holds only ids, names and counts has nothing to mask, so don't add one.
+
+## Storage sync
+
+```ts
+withStorageSync({
+  key: 'app-layout',
+  select: ({ theme, language }) => ({ theme, language }), // persist only what should survive a reload
+}),
+```
+
+Place it right after `withState`. By default it reads on init and writes on every state change, so methods that used to
+call `localStorage.setItem` after `patchState` simply drop that call. `select` keeps transient state such as
+`sidebarCollapsed` out of storage. See [layout.store.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/layout.store.ts).
+
+Guard any direct `window` access for server rendering. Storage sync handles that for you, hand-written code doesn't.
+
+## Rules
+
+<!-- rules -->
+- Install `@ngrx-toolkit/core` for Angular 22 (`@angular-architects/ngrx-toolkit` for 21 and earlier), with the same major as Angular.
+- Use `withResource`, `withMutations`/`httpMutation`, `guardedDevtools`, `withMapper` and `withStorageSync` as the standard extensions.
+- Add `withImmutableState`, `withReset`, `withConditional`, `withUndoRedo` or `withCallState` only when a real need appears, and update the inventory in the same change.
+- Do not use `withDataService`, `withEntityResources`, `withPagination`, `withRedux`, `createEffects` or `withFeatureFactory`.
+- Use `withFeature` from `@ngrx/signals` instead of `withFeatureFactory`, and `patchState` from `@ngrx/signals` instead of the toolkit's.
+- Never call `withDevtools` directly; call `guardedDevtools(name, ...)` from one shared file.
+- Add `withMapper` to redact secret-shaped keys when a store's tracked state holds a full entity row.
+- Persist state with `withStorageSync` and a `select` that lists only what should survive a reload; place it right after `withState`.
+<!-- /rules -->
+
+---
+
+# Custom store features
+
+`signalStoreFeature` lets you package state, computed values and methods as one reusable piece, and put it in any store
+with a single line. It is the most powerful thing in SignalStore and the easiest to overuse.
+
+## When to write one
+
+**Write a feature the third time you copy the same block between stores.** Not before.
+
+A feature written on the first use guesses at what varies. After three real copies you know which parts are the same and
+which differ, and the feature takes exactly those as parameters. This is the same rule as
+[the philosophy chapter](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/00-philosophy.md): write the abstraction the third time.
+
+Three blocks that show up again and again in list and search stores, and are the usual first features:
+
+| Feature | The repeated code |
+| --- | --- |
+| `withRequestStatus()` | A `loading` flag, an `error` flag and a `loaded` flag that can disagree, in every `rxMethod` store |
+| `withServerPagination()` | `page`, `pageSize`, `total`, `pageCount` and a `setPage` in every list store |
+| `withFilters()` | A filter patch that also has to send the user back to page 1 |
+
+Reads built on resources and writes built on mutations don't need `withRequestStatus`: they already expose `status`,
+`isLoading` and `error`. It exists for stores built on `rxMethod`.
+
+## A feature with state, computed values and methods
+
+```ts
+export type RequestStatus = 'idle' | 'loading' | 'success' | 'error';
+
+export function withRequestStatus() {
+  return signalStoreFeature(
+    withState<{ status: RequestStatus; error: string | null }>({ status: 'idle', error: null }),
+    withComputed(({ status }) => ({
+      isLoading: computed(() => status() === 'loading'),
+      isSuccess: computed(() => status() === 'success'),
+      isError: computed(() => status() === 'error'),
+    })),
+    withMethods(store => ({
+      setLoading() { patchState(store, { status: 'loading', error: null }); },
+      setSuccess() { patchState(store, { status: 'success', error: null }); },
+      setError(error: string) { patchState(store, { status: 'error', error }); },
+    })),
+  );
+}
+```
+
+One `status` field cannot be `loading` and `error` at once, which the three-flag version can. The file is
+[with-request-status.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/with-request-status.ts), and
+[product-search.store.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/product-search.store.ts) uses it with `rxMethod`.
+
+## A feature that needs another feature
+
+When a feature depends on something the store must already have, say so with `type<>()` in the first argument. The compiler
+then rejects the store if the dependency is missing or in the wrong order:
+
+```ts
+export function withFilters<F extends Record<string, unknown>>(initial: F) {
+  return signalStoreFeature(
+    { methods: type<{ firstPage(): void }>() },
+    withState({ filters: initial }),
+    withMethods(store => ({
+      patchFilters(patch: Partial<F>) {
+        patchState(store, s => ({ filters: { ...s.filters, ...patch } }));
+        store.firstPage();
+      },
+    })),
+  );
+}
+```
+
+`withFilters` needs `firstPage()`, which `withServerPagination()` provides, so it must come after it in the store. See
+[with-filters.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/with-filters.ts) and
+[with-server-pagination.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/with-server-pagination.ts).
+
+## Connecting a feature to a store's own signals
+
+A feature that takes a signal as a parameter is reused with any store that has one. `withFeature` hands the store to a
+function that returns the feature:
+
+```ts
+function withOrderLabel(orderId: Signal<number>) {
+  return signalStoreFeature(withComputed(() => ({ label: computed(() => `Order #${orderId()}`) })));
+}
+
+export const OrderHeaderStore = signalStore(
+  withState({ orderId: 0 }),
+  withFeature(({ orderId }) => withOrderLabel(orderId)),
+);
+```
+
+This replaces the toolkit's deprecated `withFeatureFactory`. See [order-header.store.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/order-header.store.ts).
+
+## State that follows other state
+
+`withLinkedState` adds writable state that is computed from other signals and resets itself when its source changes. Use it
+instead of an `effect` that sets state:
+
+```ts
+withLinkedState(({ options }) => ({
+  selectedOption: linkedSignal<Option[], Option | undefined>({
+    source: options,
+    computation: (next, previous) => next.find(o => o.id === previous?.value?.id) ?? next[0],
+  }),
+})),
+```
+
+The selection survives a refetch if the option still exists, and falls back to the first one if not. The file is
+[options.store.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/options.store.ts).
+
+For a function that reacts to a signal and doesn't need operators, `signalMethod` is lighter than `rxMethod`.
+
+## When stores must talk to each other
+
+Stores should not inject each other. When two stores really need to coordinate (a cart that changes when an order is
+placed), use the events plugin from `@ngrx/signals/events`. One side dispatches a named event, the other reacts to it, and
+neither knows the other exists.
+
+```ts
+export const cartEvents = eventGroup({
+  source: 'Cart',
+  events: {
+    added: type<{ sku: string; qty: number }>(),
+    cleared: type<void>(),
+  },
+});
+
+export const CartStore = signalStore(
+  { providedIn: 'root' },
+  withState({ lines: {} as Record<string, number> }),
+  withReducer(
+    on(cartEvents.added, ({ payload }, state) => ({
+      lines: { ...state.lines, [payload.sku]: (state.lines[payload.sku] ?? 0) + payload.qty },
+    })),
+    on(cartEvents.cleared, () => ({ lines: {} })),
+  ),
+);
+```
+
+A component dispatches with `injectDispatch(cartEvents).added({ sku, qty })`. See [cart-events.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/cart-events.ts)
+and [cart.store.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/cart.store.ts). This is the replacement for the toolkit's `withRedux`, and it is
+the answer to "billing needs something from orders" in [01-architecture.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/01-architecture.md). Use it sparingly: most
+state is one page's state, and a page's store is enough.
+
+## Rules
+
+<!-- rules -->
+- Write a custom `signalStoreFeature` only after the same block has been copied between stores three times.
+- Use one `status` field (`idle | loading | success | error`) instead of separate `loading`, `error` and `loaded` flags in `rxMethod` stores.
+- Do not use `withRequestStatus` with resources or mutations; they already track their own status.
+- Declare what a feature needs from the store with `type<>()` as its first argument so the compiler checks order.
+- Connect a reusable feature to a store's own signals with `withFeature`, not `withFeatureFactory`.
+- Use `withLinkedState` or `linkedSignal` for state that follows other state instead of an `effect` that sets signals.
+- Use `signalMethod` for reactions that need no operators, and `rxMethod` when they do.
+- Never inject one store into another; coordinate stores with `@ngrx/signals/events` event groups.
+<!-- /rules -->
+
+---
+
+# Forms, routing, translations and right-to-left
+
+The parts of an app that every screen touches: how a form validates, how a route loads, how text is translated, and how the
+layout flips for Arabic.
+
+## Forms
+
+**Reactive Forms are the default.** Validators and input directives (digits only, trimmed text, IBAN-shaped, and so on)
+live in a shared `validators` and `directives` library and are written against Reactive Forms, so every form gets them for
+free.
+
+- A form control is typed: `new FormControl('', { nonNullable: true })`, never an untyped `FormControl(null)`.
+- Validators are functions in the shared library, named for what they check. Error messages are translation keys keyed by the
+  validator's error name, so the template maps `errors` to `t('errors.' + key)` once, in a shared error component.
+- A form with unsaved changes extends a small `FormDeactivate` base and is protected by a `canDeactivate` guard, so leaving
+  the page asks first.
+- Sanitise on the way in, not only on the server: trim text and reject markup that has no business in the field. See the
+  reason check in [cancel-order-dialog.component.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/testing/examples/cancel-order-dialog.component.ts).
+- A submit button is disabled while the request is pending and a second click is ignored in code as well, because disabled
+  is a visual state and not a guarantee.
+
+Angular 22 ships Signal Forms as public API, with parts still marked experimental. They are the likely future of forms. This
+guide stays on Reactive Forms for now because the shared validators and directives are built on them, and mixing two form
+systems in one app costs more than either saves. A small new form in a codebase with no such investment may reasonably try
+Signal Forms.
+
+## Routing
+
+- **Lazy by default.** Every feature is a `loadComponent` or `loadChildren`. Only the shell is in the main bundle.
+- **One routes file per feature**, named `<feature>.routes.ts`, exporting a `Routes` array. The app's route table only points
+  at features, it doesn't list their children.
+- **Bind route data to inputs** with `withComponentInputBinding()`, so a page declares `orderId = input<string>()` instead of
+  injecting `ActivatedRoute`.
+- **Page titles are translation keys** in the route's `title`, resolved by a title strategy that translates them.
+- **Guards are functional and built by factories**: `createRoleGuard('manager')`, `createPermissionGuard(Permission.Refunds)`.
+  A factory keeps the rule in the route table where reviewers read it.
+- **Unauthenticated and authenticated pages sit under different shells**, each with its own layout.
+
+```ts
+export const routes: Routes = [
+  {
+    path: 'orders',
+    title: 'titles.orders',
+    canActivate: [authGuard, createRoleGuard('manager')],
+    loadChildren: () => import('@shop/orders/feature/orders').then(m => m.ORDERS_ROUTES),
+  },
+];
+```
+
+Provide `withComponentInputBinding()` and a preloading strategy in `app.config.ts`. `PreloadAllModules` is a fine start for
+an app of this size; switch to a custom strategy when the bundle list grows.
+
+## Translations
+
+The app uses Transloco with one file per language, `public/i18n/en.json` and `public/i18n/ar.json`.
+
+- **Every key exists in every language file.** A missing Arabic key is a bug caught in review, and the test setup logs it
+  (see `provideTestTransloco` in [09-testing.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/09-testing.md)).
+- Keys are camelCase and nested by feature: `orders.cancel.reasonRequired`.
+- A template uses the structural directive once at the top, with a prefix: `*transloco="let t; prefix: 'orders.cancel'"`.
+- Stores, interceptors and services carry **keys**, never translated strings. The template translates.
+- A read that depends on language (an `Accept-Language` header) reads the language signal inside its request, so a language
+  change refetches. See [OrderDetailsComponent](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/testing/examples/order-details.component.ts).
+- Format dates and numbers through one helper that takes the language as a parameter, so Arabic digits and calendars are
+  decided in one place, and the helper stays a pure function.
+
+## Right-to-left
+
+Arabic is not a translation file, it is a layout. The language store exposes a `dir` computed, and the root element binds it:
+
+```ts
+// layout.store.ts
+withComputed(({ language }) => ({
+  isRtl: computed(() => language() === 'ar'),
+  dir: computed(() => (language() === 'ar' ? 'rtl' : 'ltr')),
+})),
+```
+
+Then write styles so they need no per-language code:
+
+- **Use logical properties**, never left and right. With utility classes that is `ms-4` and `pe-2` instead of `ml-4` and
+  `pr-2`, `text-start` instead of `text-left`, `start-0` instead of `left-0`.
+- **Mirror directional icons**: arrows, chevrons, "back" and "next". Icons that carry no direction (a magnifier, a bin) stay.
+- **Don't mirror** numerals, logos, charts' time axes, phone numbers or code.
+- **Use a font with Arabic glyphs** as the primary font, not as a fallback, so the two scripts have matching weight and height.
+- **Test it.** Switch the language in a spec (`layout.fake.language.set('ar')`) and assert on what changes, and look at every
+  new screen in Arabic once before merging.
+
+## Rules
+
+<!-- rules -->
+- Use Reactive Forms as the default; build validators and input directives in a shared library and reuse them.
+- Type every form control; use `nonNullable` controls.
+- Make validator error messages translation keys keyed by the error name.
+- Protect forms with unsaved changes with a `canDeactivate` guard.
+- Trim and reject unwanted markup in form input in code, and ignore a second submit while a request is pending.
+- Lazy-load every feature with `loadComponent` or `loadChildren`; keep one `<feature>.routes.ts` per feature.
+- Use `withComponentInputBinding()` and read route values through `input()`, not `ActivatedRoute`.
+- Put translation keys in route `title`; build guards with factory functions such as `createRoleGuard`.
+- Provide an entry for every key in every language file; keep keys camelCase and nested by feature.
+- Carry translation keys in stores, interceptors and services; translate only in templates.
+- Read the language signal inside a request that depends on language so it refetches on change.
+- Expose a `dir` computed from the language store and bind it on the root element.
+- Use logical properties (`ms-*`, `pe-*`, `text-start`, `start-*`), never physical left and right.
+- Mirror directional icons in right-to-left; do not mirror numerals, logos or code.
+<!-- /rules -->
+
+---
+
+# Accessibility
+
+Accessibility is part of "done". It is cheap to build in from the first commit and expensive to retrofit, and the people it
+protects are not a small group: anyone on a phone in sunlight, anyone using a keyboard, anyone whose first language is read
+right to left.
+
+## Measure contrast, don't judge it
+
+Eyes lie, especially on your own monitor. Measure.
+
+| Text | Minimum ratio |
+| --- | --- |
+| Small text (under 18px, or under 14px bold) | **7:1** |
+| Any other text | 4.5:1 |
+| Large text, icons, input borders, focus rings | 3:1 |
+
+7:1 for small text is stricter than the WCAG AA minimum of 4.5:1. It is the AAA level, and it is what keeps small labels
+readable on a phone outdoors. [templates/a11y/contrast.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/a11y/contrast.ts) is a 15-line function that returns the
+ratio between two hex colours, and its spec pins known values.
+
+A brand colour is usually the problem. A saturated blue such as `#0059ff` on a near-black `#101820` measures 3.3:1. That is
+fine for a large heading or a filled button, and unreadable as a 12px label. So:
+
+- **Brand colours are for fills, borders and large text.** Small text uses a neutral token with a measured ratio.
+- **Define text colours as design tokens** and check the token pairs once, rather than checking every screen.
+- **Check dark mode separately.** A pair that passes on white can fail on dark.
+
+## Meaning never rides on colour alone
+
+A red border is not an error message. Pair every colour signal with text, an icon or a pattern:
+
+- An invalid field shows an icon and a message, and the control has `aria-invalid="true"`.
+- A status is a word ("Paid", "Cancelled") as well as a colour, and a chart series has a label or a pattern as well as a hue.
+- A required field says "required" in text, not only with a coloured asterisk.
+
+## Keyboard and focus
+
+- Every interactive element is reachable with Tab, in reading order, and operable with Enter or Space. Use a real `<button>`
+  or `<a>`, not a clickable `<div>`.
+- Focus is always visible. Don't remove the outline; restyle it with a colour that meets 3:1 against its surroundings.
+- A dialog moves focus in when it opens, traps it while open and returns it to the trigger on close.
+- After a route change, move focus to the page heading so a screen reader announces where it landed.
+- Don't use positive `tabindex`.
+
+## Names, roles and announcements
+
+- Every control has an accessible name: a `<label for>`, or `aria-label` for an icon button.
+- Use native elements before ARIA. `aria-*` repairs a missing semantic; it doesn't replace one.
+- Errors and status changes that appear without a page load use `role="alert"` or `aria-live="polite"`.
+- A list that is loading carries `aria-busy`, as in [order-list.component.html](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/signal-store/order-list.component.html).
+- Images have `alt`; decorative ones have `alt=""`.
+
+## Size and motion
+
+- Body text is at least 16px, and nothing meaningful is under 12px. Check at phone scale, not on a desktop monitor.
+- Touch targets are at least 44 by 44 CSS pixels.
+- Respect `prefers-reduced-motion`: turn off parallax, large slides and autoplay for those users.
+- Don't rely on hover for anything a touch user needs.
+
+## Let the tools catch the easy ones
+
+Enable the `templateAccessibility` config from `angular-eslint` in the shared ESLint config and leave it on. The common
+temptation is to switch a rule off to ship a form; fix the markup instead. Automated checks catch only part of the problems,
+so also tab through every new screen once with the mouse unplugged.
+
+## Rules
+
+<!-- rules -->
+- Measure contrast with a function or tool; require 7:1 for small text, 4.5:1 for other text, and 3:1 for large text, icons, borders and focus rings.
+- Use brand colours only for fills, borders and large text; give small text a neutral token with a measured ratio.
+- Check light and dark themes separately.
+- Never let colour alone carry meaning; pair it with text, an icon or a pattern.
+- Mark invalid controls with `aria-invalid` and show the error as text.
+- Use native `<button>` and `<a>` for interactive elements; never a clickable `<div>`.
+- Keep focus visible with at least 3:1 contrast; never remove the outline without replacing it.
+- Move focus into a dialog on open, trap it while open, and return it on close; move focus to the heading after a route change.
+- Give every control an accessible name; prefer native elements over ARIA.
+- Announce dynamic errors and status changes with `role="alert"` or `aria-live`.
+- Keep body text at 16px or more, touch targets at 44px or more, and honour `prefers-reduced-motion`.
+- Enable the Angular ESLint template accessibility rules and do not switch them off to ship.
+<!-- /rules -->
+
+---
+
+# Testing
+
+A unit test answers one question: **given these inputs and these collaborators, does this file do the right thing?** This
+chapter is the way I write specs, and [templates/testing/](https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/) is the toolkit that makes it quick. All of it
+runs on Jest 30 with `jest-preset-angular`, zoneless. With Vitest, replace `jest.fn` and `jest.spyOn` with `vi.fn` and
+`vi.spyOn`; nothing else changes.
+
+## The idea
+
+- The file under test is **real**. Everything it `inject()`s is a **fake** you control.
+- Every test starts from a **fresh world**: new fakes, a new component, nothing left over from the last test.
+- A test asserts on what the file **does**: what it renders, what its public signals hold, what it asked its collaborators
+  to do. Never on private fields.
+
+And four things that are not used in specs:
+
+| Don't | Because | Do instead |
+| --- | --- | --- |
+| `TestBed.configureTestingModule` in a spec | Boilerplate that hides what the test is about | `render`, `renderPage`, `injectService` |
+| `{ provide: Service, useValue: {...} }` | Untyped, shared between tests, drifts from the real API | `fakeService(Service, () => ({...}))` |
+| `HttpTestingController` | Verbose, and doesn't work with `httpResource` as naturally | `fakeHttp({ url: body })` |
+| `as jest.Mock` casts | Hide wrong types | `fakeService` is typed, so `fake.method` is already a mock |
+
+The only `useValue` allowed is for an injection token such as `DOCUMENT` or `PLATFORM_ID`.
+
+## The toolkit
+
+Copy [templates/testing/](https://github.com/tomavic/angular-philosophies/blob/main/templates/testing/) to `src/app/core/test/`, map `@/core/test` in `tsconfig` and Jest
+([jest.config.example.js](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/testing/jest.config.example.js) shows how), and import from that one place.
+
+| Need | Use |
+| --- | --- |
+| Render a component | `render(Component, providers, options?)` |
+| Render a routed page (adds translations) | `renderPage(Component, providers, options?)` |
+| Get a service or a store | `injectService(Service, [Service, ...fakes])` |
+| Run an `inject()` function (guard, resolver) | `runInContext(() => guard(route, state), fakes)` |
+| Fake any service | `fakeService(Service, () => ({ method: jest.fn() }))` |
+| Fake HTTP, including `httpResource` | `fakeHttp({ '/api/x': body, '/api/y': httpError(500) })` |
+| Router and route | `fakeRouter()`, `fakeRoute({ params, queryParams, data })` |
+| Storage | `fakeStorage(StorageService, { language: 'en' })` |
+| Force a resource state | `setResource(resource, { value } / { status } / { error })` |
+| Run pending effects | `flushEffects()` |
+| Wait for async work and render | `await view.whenStable()` |
+
+### What a fake gives you
+
+```ts
+const files = fakeService(FileDownloadService, () => ({ save: jest.fn() }));
+
+files.fake.save; // the live fake the component received, typed, a jest.Mock here
+expect(files.fake.save).toHaveBeenCalledWith('order-77.json', expect.any(String));
+```
+
+- `x.fake` is the instance the code under test is using **in this test**.
+- The **factory form** `() => ({ ... })` builds a new fake per test, so no `jest.clearAllMocks()` is ever needed.
+- Helpers with controls expose them on `x._`: `http._.reply(url, body)`, `http._.calls(url)`, `route._.setQueryParams({...})`.
+- Types come from the real service. If the real member is a signal, the fake is a `signal(...)`; if it is an observable, use
+  `of(...)` or a `Subject`. A wrong shape fails to compile, which is how stubs faking APIs that no longer exist get found.
+
+### What a view gives you
+
+| Read the DOM | Act like a user | Drive the component |
+| --- | --- | --- |
+| `view.$('css' or Component)`, `view.$All(...)` | `.click()`, `.input('x')`, `.type('x')` | `view.host`, the instance |
+| `view.$testId('LOGIN_BTN')` | `.keydown('Enter')`, `.paste('x')` | `view.setInput('name', value)`, typed |
+| `view.getByText('Cancel')` | `.focus()`, `.mouseEnter()` | `view.detectChanges()` |
+| `.textContent`, `.attr()`, `.hasClass()` | | `view.inject(Service)` |
+
+Typed `setInput` uses Angular's private `ɵINPUT_SIGNAL_BRAND_WRITE_TYPE`. That is the one private API in the toolkit; if a
+future Angular renames it, one type in `testing-utils.ts` is the only line to change.
+
+## The recipe
+
+1. Read the file, and its template, and classify it.
+2. List every injection.
+3. Pick a fake for each one.
+4. List the behaviours and branches, as test names, before writing code.
+5. Decide the describes.
+6. Write the spec.
+7. Run with coverage and close the gaps.
+
+### 1. Classify
+
+| Kind | Build it with |
+| --- | --- |
+| Service, store, guard class | `injectService(Service, [Service, ...fakes])` |
+| Component with no translations | `render(Component, fakes)` |
+| Page or component using Transloco | `renderPage(Component, fakes)` |
+| Directive or pipe | `render(TestHost, fakes)` with a tiny host component |
+| Pure function | Call it directly. No Angular needed |
+
+### 2. List every injection
+
+Collect them from five places: `inject()` fields, constructor parameters, `inject*` helper functions (open them to see what
+they inject), `httpResource` and `resource` calls (`httpResource` uses `HttpClient`), and the component's own `providers`
+plus its child components, since rendering builds those too.
+
+**An injection you don't use still has to be satisfied.** A component that injects a toaster but never calls it still makes
+Angular build the real one, and the real one may need a library service you didn't expect. The first run fails with
+`NG0201: No provider found`. Fake it with an empty object.
+
+### 3. Pick a fake
+
+Go top to bottom and stop at the first rule that fits:
+
+| The injection is | Do this |
+| --- | --- |
+| `HttpClient`, including `httpResource` | `fakeHttp({ url: body })` |
+| `Router` or `ActivatedRoute` | `fakeRouter()` or `fakeRoute({ params })` |
+| Translations | Real, through `renderPage` |
+| A root store that is plain state with no dependencies | Keep it **real** and seed it through its own methods |
+| Anything else | `fakeService(X, () => ({ onlyWhatIsUsed: jest.fn() }))` |
+| An injection token | `{ provide: TOKEN, useValue }` |
+
+Two rules for `fakeService`: **fake only what the code uses** (`{ save: jest.fn() }` is enough when only `save()` is called),
+and **match the real types** so the fake can't drift.
+
+When a service is also declared in the component's own `providers`, a fake in the shared list is ignored, because the
+component's provider wins. Use the `providers` option, which overrides everywhere:
+
+```ts
+view = await renderPage(Component, providers, { providers: [fakeService(Toaster, {})] });
+```
+
+### 4. List behaviours before writing code
+
+Walk the file and note every place it can go two ways: `if`, `?:`, `&&`, `??`, `?.`, `@if`, `@for` with `@empty`, `@switch`,
+`next` and `error` callbacks, every public method and every computed. Write one line per behaviour:
+
+- renders the title and no error before the user does anything
+- confirming with an empty, blank or HTML reason shows the error and sends nothing
+- confirming with a valid reason sends the trimmed text and the id from the dialog
+- while sending, it shows loading, disables Back and ignores a second click
+- the API says yes: the dialog closes with `true`
+- the API says no: the dialog stays open
+
+Each line is one `it(...)`, named as a sentence. Variants of one check use `it.each`.
+
+### 5. Decide the describes
+
+This is the step people get wrong most often.
+
+> **A top-level `describe` is one world: one set of providers, fixed when the component is created.**
+> **A nested `describe` groups tests that share an extra `beforeEach` action inside that world.**
+
+For each condition ask: *can I change it from inside a test, through a fake?*
+
+| Same describe: a test can change it | New top-level describe: it can't |
+| --- | --- |
+| A fake's signal: `language.fake.language.set('ar')` | Something read once in a constructor or field initialiser |
+| A fake's return value: `x.fake.get.mockReturnValue(...)` | The route snapshot: `fakeRoute({ params })` |
+| A later HTTP answer: `http._.reply(url, body)` then reload | Dialog data |
+| User input: `.input()`, `.click()`, `setInput()` | The first HTTP answer, when you assert the first render |
+| | A component-level provider |
+
+For the second column, add a top-level describe that swaps only that one fake through `options.providers`:
+
+```ts
+describe('OrderDetailsComponent when the API fails', () => {
+  it('shows the error instead of the order', async () => {
+    const view = await renderPage(OrderDetailsComponent, providers, {
+      providers: [fakeHttp({ [ORDER_URL]: httpError(500) })],
+    });
+    await view.whenStable();
+    ...
+```
+
+Trying to swap a fake inside a test fails with "Cannot configure the test module when the test module has already been
+instantiated". That error means you need another describe.
+
+### 6. Write the spec
+
+Every spec has the same shape. [order-details.component.spec.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/testing/examples/order-details.component.spec.ts)
+is the complete version:
+
+```ts
+// 1. Fakes: one per injection, at module level, factory form.
+const http = fakeHttp({ [ORDER_URL]: order });
+const route = fakeRoute({ params: { orderId: '77' } });
+
+// 2. The shared provider list.
+const providers = [provideRouter([]), http, route, language, files];
+
+// 3. One describe per world.
+describe('OrderDetailsComponent', () => {
+  let view: RenderResult<OrderDetailsComponent>;
+
+  // 4. Build the world in beforeEach.
+  beforeEach(async () => {
+    view = await renderPage(OrderDetailsComponent, providers);
+    await view.whenStable(); // let httpResource load and the template render
+  });
+
+  // 5. One behaviour per it, named as a sentence.
+  it('loads the order named in the route', () => {
+    expect(http._.calls(ORDER_URL)).toBe(1);
+    expect(view.$testId('ORDER_TITLE').textContent).toBe('Order 77');
+  });
+});
+
+// 6. Variant worlds swap one fake.
+```
+
+Habits that keep specs readable:
+
+- **Arrange, act, assert**, with a blank line between.
+- **Name helpers after what the user does**, so tests read like a story:
+  `const confirmButton = () => view.getByText('Confirm')` and `const answer = (ok: boolean) => api.fake.cancel.mock.calls[0][1](https://github.com/tomavic/angular-philosophies/blob/main/docs/ok)`.
+- **Prefer the DOM and public signals** over private members. Use `component['x']` rather than `as any` only when there is no public way.
+- **Make test data `satisfies` the real model**: `const order = { ... } satisfies Order;`, so a renamed field fails to compile.
+
+### 7. Coverage
+
+Run one spec with coverage for its source file, then read the uncovered lines. For each gap decide:
+
+| The gap is | Do this |
+| --- | --- |
+| A real state you haven't tested | Add the test |
+| Code that can never run (a `?.` after validation, an unused `computed`) | Simplify the code if behaviour stays the same, and list the edit in the pull request |
+| Can't be simplified safely | `/* istanbul ignore next */` with a one-line reason |
+
+## Cookbook
+
+**HTTP.**
+
+```ts
+const http = fakeHttp({
+  '/api/orders': { items: [] }, // a body; the longest matching key wins
+  '/api/limits': httpError(500), // an error reply
+});
+
+http._.reply('/api/orders', { items: [a] }); // change the answer for later requests in this test
+http._.calls('/api/orders'); // how many requests hit it
+expect(http.fake.post).toHaveBeenCalledWith('/api/x', body);
+
+const slow = fakeHttp({}, { pending: true }); // every request waits
+slow._.flush('/api/orders', body); // answer it
+slow._.fail('/api/orders', 403); // or fail it
+```
+
+An unknown URL fails with `fakeHttp: no route for GET /api/...`, so a missing route never passes silently.
+
+**Resources.** Prefer the real thing: serve the data with `fakeHttp` and `await view.whenStable()`. To reload after changing
+the answer: `http._.reply(...)`, `view.host.order.reload()`, `await view.whenStable()`. To force a state without HTTP, use
+`setResource(view.host.list, { status: 'reloading' })` **before** the first `detectChanges` that reads the resource, because
+a `computed` that already read it keeps its cached value.
+
+**A callback passed to a service.** Capture it, then fire it when the test is ready, as the dialog spec does with `answer(true)`.
+
+**Signals in fakes.** Put `signal(...)` in the factory and change it with `x.fake.sig.set(...)`, as `language` does in the page spec.
+
+**Inputs and outputs.**
+
+```ts
+view = await render(Card, [], { inputs: { title: 'Hello' } }); // typed against the component
+view.setInput('amount', '42'); // typed, accepts the input's transform type
+const value = await firstOutputFrom(view.host.saved); // the next output emission
+```
+
+**Effects and timers.** `flushEffects()` runs pending effects. `jest.useFakeTimers()` with `advanceTimersByTimeAsync(ms)`
+covers `setTimeout` and debounce. A store spec's version of `whenStable` is a small `settle()` that flushes effects, lets the
+resource finish and flushes again, as in [order-list.store.spec.ts](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/testing/examples/order-list.store.spec.ts).
+
+**A store.** `injectService(Store, [Store, http])`, call its methods, assert on its signals. See the same file.
+
+## Pitfalls
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `NG0201: No provider found for X` | Something in the tree injects X. Fake it, even if your file never calls it |
+| A fake in `providers` is ignored | The component declares that service in its own `providers`. Use `{ providers: [fake] }` in the options |
+| "Cannot configure the test module ... already instantiated" | You swapped a fake inside a test. Make a new top-level describe |
+| The DOM still shows the loading state | `httpResource` hasn't settled. `await view.whenStable()` |
+| `setResource` has no effect | It ran after a `computed` cached the real value. Call it before the first `detectChanges` |
+| A boolean input is always on | You passed `signal(false)` instead of `false`. Typed `setInput` catches it |
+| Tests pass alone and fail together | A shared mutable object at module level. Use the factory form of `fakeService` |
+| A debounced store never updates | Fake timers are on but effects weren't flushed. Call `flushEffects()`, then advance the timers |
+
+## Review checklist
+
+- Every `inject()` in the file and in its children is satisfied by a fake, or kept real on purpose.
+- No `TestBed`, no `useValue` for services, no `as jest.Mock`, no `HttpTestingController`.
+- Fakes are module-level and use the factory form. The provider list is shared.
+- One top-level describe per world; variants swap one fake through `options.providers`.
+- Test names are sentences about behaviour, and each `it` checks one behaviour.
+- Every branch in the `.ts` and the template has a test, or a listed code simplification.
+- The new spec is at full coverage for its file, and the whole suite is green.
+
+## Rules
+
+<!-- rules -->
+- Test the real file with fakes for everything it injects; start every test from a fresh world.
+- Assert on behaviour (DOM, public signals, calls on fakes), never on private fields.
+- Never use `TestBed.configureTestingModule` directly, `{ provide, useValue }` for services, `HttpTestingController` or `as jest.Mock` in specs.
+- Import every test utility from `@/core/test`.
+- Fake services with `fakeService(X, () => ({ ... }))` in the factory form, at module level, one per `inject()`.
+- Fake only what the code uses, and match the real types so the fake cannot drift.
+- Fake HTTP, including `httpResource`, with `fakeHttp`; let unknown URLs fail loudly.
+- Satisfy every injection in the tree, including ones the code never calls.
+- Keep a root store real when it is plain state with no dependencies, and seed it through its own methods.
+- Write one top-level `describe` per world; use a new top-level describe with `options.providers` for anything a test cannot change through a fake.
+- Name tests as sentences, check one behaviour per `it`, and use `it.each` for variants of one check.
+- List the behaviours and branches before writing the spec.
+- Make test data `satisfies` the real model.
+- Give every store, service, guard and component a spec beside it.
+- Wait with `await view.whenStable()`; for stores flush effects and then settle the resource.
+<!-- /rules -->
+
+---
+
+# Tooling
+
+The tools are chosen so that the rules in this guide are enforced by the machine. Every config below is in
+[templates/config/](https://github.com/tomavic/angular-philosophies/blob/main/templates/config/) and is the one in use, not a suggestion.
+
+## The stack
+
+| Area | Choice |
+| --- | --- |
+| Framework | Angular 22 (standalone, zoneless, signals) |
+| Language | TypeScript 6.0, strict |
+| State | NgRx Signals 22, `@ngrx-toolkit/core` 22 |
+| Workspace | Nx, pnpm |
+| Tests | Jest 30 with `jest-preset-angular` |
+| Lint and format | ESLint (flat config) with `angular-eslint`, Prettier |
+| Commits | Conventional Commits with an emoji, Husky, lint-staged, commitlint |
+
+The versions are the ones Angular supports. Angular 22 accepts TypeScript `>=6.0 <6.1`, so the TypeScript range moves with
+the Angular major, never ahead of it. Check [angular.dev/reference/versions](https://angular.dev/reference/versions) before
+you bump either.
+
+## pnpm and Nx
+
+- **Always pnpm.** One package manager, one lockfile. Run Nx through it: `pnpm nx test orders-data-access`.
+- **Nx owns the targets.** In an Nx workspace there is no `angular.json`; each project's `project.json` defines build, test
+  and lint. Where Angular's docs say `ng build`, run `pnpm nx build <project>`, and use the Nx generators instead of
+  `ng generate`.
+- `pnpm nx affected -t lint,test` runs only what the current change touches. It is the command CI and a pre-push hook use.
+- Name scripts `domain:action` (`start:dev`, `build:ci`, `test:ci`) and keep them in the root `package.json`.
+
+## TypeScript
+
+[tsconfig.strict.json](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/config/tsconfig.strict.json) turns on `strict`, `noImplicitOverride`,
+`noPropertyAccessFromIndexSignature`, `noImplicitReturns` and the Angular compiler's `strictTemplates`. Strict templates
+catch a binding to a renamed signal at build time, which is half the reason to rename things confidently. Do not turn strict
+flags off to make a build pass; fix the type.
+
+## ESLint
+
+A flat config at the root, `@nx/enforce-module-boundaries` for the architecture rules
+([eslint.boundaries.js](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/config/eslint.boundaries.js)), and `angular-eslint` for components and templates. The rules
+that matter most:
+
+- `prefer-standalone` and the signal-input rules, as errors.
+- The template accessibility config, on and left on. See [08-accessibility.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/08-accessibility.md).
+- `no-restricted-imports` for sibling entry points, as described in [01-architecture.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/01-architecture.md).
+- No `any`. Where an `any` is truly needed, write `// eslint-disable-next-line` with the reason beside it.
+
+## Prettier
+
+[.prettierrc.json](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/config/.prettierrc.json) is short and has no options worth arguing over:
+
+- 120 columns, 2 spaces, single quotes, `trailingComma: all`, `arrowParens: avoid`.
+- `singleAttributePerLine` and `bracketSameLine`, so a template diff shows one attribute per changed line.
+- `@ianvs/prettier-plugin-sort-imports` with the order `@angular/*`, then `rxjs`, then third-party, then relative.
+- `prettier-plugin-tailwindcss` sorts utility classes, and `*.html` uses the `angular` parser.
+
+Pair it with [.editorconfig](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/config/.editorconfig). Formatting is never a review comment: the hook formats, so a
+reviewer reads logic.
+
+## Commits and hooks
+
+- **Conventional Commits with an emoji:** `fix(orders-data-access): 🐛 keep the page when a reload fails`. The scope is the project
+  name, read from the `apps/` and `libs/` folders by [commitlint.config.js](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/config/commitlint.config.js), so a
+  commit always names what it touches. Run `pnpm cm` (commitizen) to be prompted instead of remembering the format.
+- **pre-commit:** `lint-staged` formats and lints only the staged files ([.lintstagedrc.json](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/templates/config/.lintstagedrc.json)).
+- **commit-msg:** commitlint checks the message.
+- **pre-push:** build and test what changed. A broken main is slower than a slow push.
+- Husky installs the hooks on `pnpm install`, so a new clone is protected without anyone remembering.
+
+## Coverage
+
+A global threshold of 80% on statements, branches, functions and lines, set in `jest.config`. A new spec reaches full coverage
+for its own file; the global number is a floor that catches drift, not a goal to game.
+
+## Working with AI agents
+
+Commit an `AGENTS.md` at the root, and one in each area that has its own rules (`apps/<app>`, `libs/<domain>`). Agents read
+the closest one. Keep the root file short: the stack, a repo map, a "read this first, by task" table, the commands, and the list
+of places where your rules override the framework's generic guidance. This repository ships that file ready to copy; see
+[11-using-with-ai.md](https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/11-using-with-ai.md).
+
+## Rules
+
+<!-- rules -->
+- Use pnpm only, and run Nx through it (`pnpm nx ...`); use Nx generators and targets instead of `ng generate` and `ng build` in an Nx workspace.
+- Use `pnpm nx affected -t lint,test` for CI and pre-push checks.
+- Keep Angular and TypeScript at versions listed together on angular.dev/reference/versions; never move TypeScript ahead of Angular.
+- Enable `strict`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns` and `strictTemplates`; never disable a strict flag to pass a build.
+- Use an ESLint flat config with `@nx/enforce-module-boundaries`, `angular-eslint`, and the template accessibility rules.
+- Do not use `any`; if unavoidable, add an eslint-disable comment with the reason beside it.
+- Format with Prettier: 120 columns, single quotes, `trailingComma: all`, `arrowParens: avoid`, one attribute per line, imports sorted `@angular`, `rxjs`, third-party, relative.
+- Never raise formatting in review; let the pre-commit hook format.
+- Write Conventional Commits with an emoji and the project name as scope; enforce with commitlint.
+- Run lint-staged on pre-commit, commitlint on commit-msg, and build and test on pre-push.
+- Hold a global coverage threshold of 80% and give every new spec full coverage of its own file.
+- Commit an `AGENTS.md` at the root and in areas with their own rules; keep the root file short.
+<!-- /rules -->
+
+---
+
+# Using this guide with AI
+
+The guide is written so that a person can read it and a tool can follow it. Every chapter ends with a block of short,
+imperative rules, and those blocks are collected into formats that AI coding tools already understand. Pick the one your
+tool uses. They all carry the same rules, because they are generated from the same chapters.
+
+| Format | Files | Works with |
+| --- | --- | --- |
+| Claude Code plugin | `.claude-plugin/`, `.mcp.json`, `ai/skills/` | Claude Code |
+| Claude skill | `ai/skills/angular-philosophies/` | Claude Code, the Claude apps, anything that loads `SKILL.md` |
+| `AGENTS.md` | `ai/AGENTS.md` | Codex, Cursor, Copilot, Gemini CLI, Claude Code and most other agents |
+| Cursor rules | `ai/cursor/*.mdc` | Cursor |
+| `llms.txt` | `llms.txt`, `ai/llms-full.txt` | Any tool that can read a URL |
+| MCP server | `ai/mcp/server.mjs` | Any MCP client |
+
+The generated files are not edited by hand. To change a rule, change the chapter in `docs/` and the files are rebuilt from it.
+
+## Claude Code plugin
+
+The plugin bundles the skill and the MCP server, so one install gives an agent both the rules and a way to look up a chapter.
+
+```bash
+/plugin marketplace add tomavic/angular-philosophies
+/plugin install angular-philosophies@angular-philosophies
+```
+
+After that, an Angular task in any project can load the skill on its own. For "a new orders list page with filters" it points the
+agent at the store, data-access and testing chapters, and at the template files to copy: a view store with a resource and a
+mutation, provided from the component, and a spec written with the test toolkit.
+
+## Claude skill, without the plugin
+
+Copy the folder into your skills directory. It is self-contained: the rules are in `SKILL.md`, the full chapters are in
+`references/`, and the code templates are in `templates/`.
+
+```bash
+# for one project, from its root
+mkdir -p .claude/skills && curl -sSL https://github.com/tomavic/angular-philosophies/archive/refs/heads/main.tar.gz | tar -xz --strip-components=3 -C .claude/skills angular-philosophies-main/ai/skills/angular-philosophies
+# for every project: the same command with ~/.claude/skills in place of .claude/skills
+```
+
+## `AGENTS.md`
+
+`ai/AGENTS.md` is a drop-in file: the stack, a "read this first, by task" table and every rule, grouped by chapter. Put it at
+the root of your project, and in an area folder if only that area follows it.
+
+```bash
+curl -o AGENTS.md https://raw.githubusercontent.com/tomavic/angular-philosophies/main/ai/AGENTS.md
+```
+
+Then add your project's own overrides under a heading of their own, above the generated rules. Where your project and this
+guide disagree, the project wins, and writing that down is how an agent learns which one to follow.
+
+## Cursor rules
+
+Each `ai/cursor/*.mdc` file covers one chapter and is attached by file type: the store rules to `**/*.store.ts`, the component
+rules to `**/*.component.ts` and `**/*.component.html`, the testing rules to `**/*.spec.ts`, and so on. Copy them in:
+
+```bash
+mkdir -p .cursor/rules && curl -sSL https://github.com/tomavic/angular-philosophies/archive/refs/heads/main.tar.gz | tar -xz --strip-components=3 -C .cursor/rules angular-philosophies-main/ai/cursor
+```
+
+## `llms.txt`
+
+`llms.txt` is an index of the chapters with a line about each, and `llms-full.txt` is every chapter in one file, with the
+rules and the code. Give a tool the URL, or paste the full file into a chat with a model that has no file access.
+
+```
+https://raw.githubusercontent.com/tomavic/angular-philosophies/main/llms.txt
+https://raw.githubusercontent.com/tomavic/angular-philosophies/main/ai/llms-full.txt
+```
+
+## MCP server
+
+`ai/mcp/server.mjs` is a small stdio server with no dependencies. It serves the chapters on demand, so an agent pulls only the
+one it needs instead of carrying everything in context.
+
+| Tool | Returns |
+| --- | --- |
+| `list_topics` | Every chapter with its title and one-line summary |
+| `get_topic` | A whole chapter, by name or number |
+| `get_rules` | The rules for one chapter, or all of them |
+| `search` | The chapters and rules that mention a word or phrase |
+
+Add it to a client with Node 22 or later:
+
+```bash
+claude mcp add angular-philosophies -- node /path/to/angular-philosophies/ai/mcp/server.mjs
+```
+
+or in any client's JSON configuration:
+
+```json
+{
+  "mcpServers": {
+    "angular-philosophies": { "command": "node", "args": ["/path/to/angular-philosophies/ai/mcp/server.mjs"] }
+  }
+}
+```
+
+The plugin registers the same server automatically.
+
+## Writing instructions for agents that work
+
+What made these files effective, if you write your own:
+
+- **Rules, not essays.** One imperative sentence each, with the word "never" where it means never.
+- **A map by task.** "Adding a store: read chapter 3, copy `order-list.store.ts`." Agents follow a pointer better than a paragraph.
+- **A reference implementation for each pattern.** An agent copies a real file more reliably than it follows a description.
+- **Say where your rules override the framework's defaults.** Otherwise the agent applies the generic best practice it was trained on.
+- **Make the rules checkable.** A rule enforced by ESLint or the compiler holds even when the instructions are ignored.
+
+## Rules
+
+<!-- rules -->
+- Treat the generated AI files (everything in `ai/` except `ai/mcp/server.mjs`, plus `llms.txt`) as build output; change the chapter in `docs/` instead.
+- Put `AGENTS.md` at the project root and add project-specific overrides above the generated rules; the project wins over the guide.
+- Keep agent instructions as one-sentence imperative rules with a task-to-chapter map and a reference file per pattern.
+- State where project rules override framework defaults, and back rules with lint rules or types where possible.
+<!-- /rules -->

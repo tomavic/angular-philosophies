@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tooling | Angular Philosophies</title>
+<meta name="description" content="pnpm, Nx, strict TypeScript, lint, format, commits and hooks.">
+<meta name="theme-color" content="#f3efe6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tooling | Angular Philosophies">
+<meta property="og:description" content="pnpm, Nx, strict TypeScript, lint, format, commits and hooks.">
+<meta property="og:url" content="https://tomavic.github.io/angular-philosophies/chapters/10-tooling.html">
+<meta property="og:image" content="https://tomavic.github.io/angular-philosophies/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f3efe6'/%3E%3Cpath d='M7 25 16 6l9 19h-4l-5-11-5 11z' fill='%2317150f'/%3E%3Cpath d='M5 19c6-6 16-8 22-4' fill='none' stroke='%23c4122f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="chapter-page">
+<a class="skip" href="#main">Skip to the chapter</a>
+<div class="progress" aria-hidden="true"></div>
+<header class="top wrap">
+  <a class="mark" href="../index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 16 6l9 19h-4l-5-11-5 11z"/></svg>Angular Philosophies</a>
+  <nav aria-label="Site"><a href="../index.html#chapters">Chapters</a><a href="../index.html#install">Install</a><a href="https://github.com/tomavic/angular-philosophies">GitHub</a><a href="../ar/index.html" lang="ar" hreflang="ar">العربية</a></nav>
+</header>
+<main id="main">
+  <header class="ch-hero wrap">
+    <span class="big-no" aria-hidden="true">10</span>
+    <p class="time"><span>Chapter 10 · Quality</span></p>
+    <h1>Tooling</h1>
+    <p class="lead">pnpm, Nx, strict TypeScript, lint, format, commits and hooks.</p>
+    <p class="ch-facts"><span>12 rules</span><span>3 min read</span><a href="https://github.com/tomavic/angular-philosophies/blob/main/docs/10-tooling.md">Source on GitHub</a></p>
+  </header>
+  <div class="wrap"><div class="figure" data-diagram="pipeline" role="img" aria-label="An animated diagram of the idea in this chapter"></div></div>
+  <div class="ch-body wrap">
+    <nav class="side" aria-label="On this page"><p>On this page</p><ol><li><a href="#the-stack">The stack</a></li><li><a href="#pnpm-and-nx">pnpm and Nx</a></li><li><a href="#typescript">TypeScript</a></li><li><a href="#eslint">ESLint</a></li><li><a href="#prettier">Prettier</a></li><li><a href="#commits-and-hooks">Commits and hooks</a></li><li><a href="#coverage">Coverage</a></li><li><a href="#working-with-ai-agents">Working with AI agents</a></li><li><a href="#rules">Rules</a></li></ol></nav>
+    <article class="prose">
+<p>The tools are chosen so that the rules in this guide are enforced by the machine. Every config below is in <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/config/">templates/config/</a> and is the one in use, not a suggestion.</p>
+<h2 id="the-stack">The stack</h2>
+<div class="table-wrap"><table><thead><tr><th>Area</th><th>Choice</th></tr></thead><tbody><tr><td data-label="Area">Framework</td><td data-label="Choice">Angular 22 (standalone, zoneless, signals)</td></tr><tr><td data-label="Area">Language</td><td data-label="Choice">TypeScript 6.0, strict</td></tr><tr><td data-label="Area">State</td><td data-label="Choice">NgRx Signals 22, <code>@ngrx-toolkit/core</code> 22</td></tr><tr><td data-label="Area">Workspace</td><td data-label="Choice">Nx, pnpm</td></tr><tr><td data-label="Area">Tests</td><td data-label="Choice">Jest 30 with <code>jest-preset-angular</code></td></tr><tr><td data-label="Area">Lint and format</td><td data-label="Choice">ESLint (flat config) with <code>angular-eslint</code>, Prettier</td></tr><tr><td data-label="Area">Commits</td><td data-label="Choice">Conventional Commits with an emoji, Husky, lint-staged, commitlint</td></tr></tbody></table></div>
+<p>The versions are the ones Angular supports. Angular 22 accepts TypeScript <code>&gt;=6.0 &lt;6.1</code>, so the TypeScript range moves with the Angular major, never ahead of it. Check <a href="https://angular.dev/reference/versions">angular.dev/reference/versions</a> before you bump either.</p>
+<h2 id="pnpm-and-nx">pnpm and Nx</h2>
+<ul><li><strong>Always pnpm.</strong> One package manager, one lockfile. Run Nx through it: <code>pnpm nx test orders-data-access</code>.</li><li><strong>Nx owns the targets.</strong> In an Nx workspace there is no <code>angular.json</code>; each project's <code>project.json</code> defines build, test and lint. Where Angular's docs say <code>ng build</code>, run <code>pnpm nx build &lt;project&gt;</code>, and use the Nx generators instead of <code>ng generate</code>.</li><li><code>pnpm nx affected -t lint,test</code> runs only what the current change touches. It is the command CI and a pre-push hook use.</li><li>Name scripts <code>domain:action</code> (<code>start:dev</code>, <code>build:ci</code>, <code>test:ci</code>) and keep them in the root <code>package.json</code>.</li></ul>
+<h2 id="typescript">TypeScript</h2>
+<p><a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/config/tsconfig.strict.json">tsconfig.strict.json</a> turns on <code>strict</code>, <code>noImplicitOverride</code>, <code>noPropertyAccessFromIndexSignature</code>, <code>noImplicitReturns</code> and the Angular compiler's <code>strictTemplates</code>. Strict templates catch a binding to a renamed signal at build time, which is half the reason to rename things confidently. Do not turn strict flags off to make a build pass; fix the type.</p>
+<h2 id="eslint">ESLint</h2>
+<p>A flat config at the root, <code>@nx/enforce-module-boundaries</code> for the architecture rules (<a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/config/eslint.boundaries.js">eslint.boundaries.js</a>), and <code>angular-eslint</code> for components and templates. The rules that matter most:</p>
+<ul><li><code>prefer-standalone</code> and the signal-input rules, as errors.</li><li>The template accessibility config, on and left on. See <a href="08-accessibility.html">08-accessibility.md</a>.</li><li><code>no-restricted-imports</code> for sibling entry points, as described in <a href="01-architecture.html">01-architecture.md</a>.</li><li>No <code>any</code>. Where an <code>any</code> is truly needed, write <code>// eslint-disable-next-line</code> with the reason beside it.</li></ul>
+<h2 id="prettier">Prettier</h2>
+<p><a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/config/.prettierrc.json">.prettierrc.json</a> is short and has no options worth arguing over:</p>
+<ul><li>120 columns, 2 spaces, single quotes, <code>trailingComma: all</code>, <code>arrowParens: avoid</code>.</li><li><code>singleAttributePerLine</code> and <code>bracketSameLine</code>, so a template diff shows one attribute per changed line.</li><li><code>@ianvs/prettier-plugin-sort-imports</code> with the order <code>@angular/*</code>, then <code>rxjs</code>, then third-party, then relative.</li><li><code>prettier-plugin-tailwindcss</code> sorts utility classes, and <code>*.html</code> uses the <code>angular</code> parser.</li></ul>
+<p>Pair it with <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/config/.editorconfig">.editorconfig</a>. Formatting is never a review comment: the hook formats, so a reviewer reads logic.</p>
+<h2 id="commits-and-hooks">Commits and hooks</h2>
+<ul><li><strong>Conventional Commits with an emoji:</strong> <code>fix(orders-data-access): 🐛 keep the page when a reload fails</code>. The scope is the project name, read from the <code>apps/</code> and <code>libs/</code> folders by <a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/config/commitlint.config.js">commitlint.config.js</a>, so a commit always names what it touches. Run <code>pnpm cm</code> (commitizen) to be prompted instead of remembering the format.</li><li><strong>pre-commit:</strong> <code>lint-staged</code> formats and lints only the staged files (<a href="https://github.com/tomavic/angular-philosophies/blob/main/templates/config/.lintstagedrc.json">.lintstagedrc.json</a>).</li><li><strong>commit-msg:</strong> commitlint checks the message.</li><li><strong>pre-push:</strong> build and test what changed. A broken main is slower than a slow push.</li><li>Husky installs the hooks on <code>pnpm install</code>, so a new clone is protected without anyone remembering.</li></ul>
+<h2 id="coverage">Coverage</h2>
+<p>A global threshold of 80% on statements, branches, functions and lines, set in <code>jest.config</code>. A new spec reaches full coverage for its own file; the global number is a floor that catches drift, not a goal to game.</p>
+<h2 id="working-with-ai-agents">Working with AI agents</h2>
+<p>Commit an <code>AGENTS.md</code> at the root, and one in each area that has its own rules (<code>apps/&lt;app&gt;</code>, <code>libs/&lt;domain&gt;</code>). Agents read the closest one. Keep the root file short: the stack, a repo map, a "read this first, by task" table, the commands, and the list of places where your rules override the framework's generic guidance. This repository ships that file ready to copy; see <a href="11-using-with-ai.html">11-using-with-ai.md</a>.</p>
+<section class="rules" aria-labelledby="rules">
+  <div class="rules-head"><h2 id="rules">Rules</h2><button type="button" class="copy" data-copy="rules-md" data-done="Copied">Copy as Markdown</button></div>
+  <p class="rules-note">These are the lines your AI tool receives. Each one is a sentence on its own.</p>
+  <ol><li>Use pnpm only, and run Nx through it (<code>pnpm nx ...</code>); use Nx generators and targets instead of <code>ng generate</code> and <code>ng build</code> in an Nx workspace.</li><li>Use <code>pnpm nx affected -t lint,test</code> for CI and pre-push checks.</li><li>Keep Angular and TypeScript at versions listed together on angular.dev/reference/versions; never move TypeScript ahead of Angular.</li><li>Enable <code>strict</code>, <code>noImplicitOverride</code>, <code>noPropertyAccessFromIndexSignature</code>, <code>noImplicitReturns</code> and <code>strictTemplates</code>; never disable a strict flag to pass a build.</li><li>Use an ESLint flat config with <code>@nx/enforce-module-boundaries</code>, <code>angular-eslint</code>, and the template accessibility rules.</li><li>Do not use <code>any</code>; if unavoidable, add an eslint-disable comment with the reason beside it.</li><li>Format with Prettier: 120 columns, single quotes, <code>trailingComma: all</code>, <code>arrowParens: avoid</code>, one attribute per line, imports sorted <code>@angular</code>, <code>rxjs</code>, third-party, relative.</li><li>Never raise formatting in review; let the pre-commit hook format.</li><li>Write Conventional Commits with an emoji and the project name as scope; enforce with commitlint.</li><li>Run lint-staged on pre-commit, commitlint on commit-msg, and build and test on pre-push.</li><li>Hold a global coverage threshold of 80% and give every new spec full coverage of its own file.</li><li>Commit an <code>AGENTS.md</code> at the root and in areas with their own rules; keep the root file short.</li></ol>
+  <pre id="rules-md" hidden>- Use pnpm only, and run Nx through it (`pnpm nx ...`); use Nx generators and targets instead of `ng generate` and `ng build` in an Nx workspace.
+- Use `pnpm nx affected -t lint,test` for CI and pre-push checks.
+- Keep Angular and TypeScript at versions listed together on angular.dev/reference/versions; never move TypeScript ahead of Angular.
+- Enable `strict`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns` and `strictTemplates`; never disable a strict flag to pass a build.
+- Use an ESLint flat config with `@nx/enforce-module-boundaries`, `angular-eslint`, and the template accessibility rules.
+- Do not use `any`; if unavoidable, add an eslint-disable comment with the reason beside it.
+- Format with Prettier: 120 columns, single quotes, `trailingComma: all`, `arrowParens: avoid`, one attribute per line, imports sorted `@angular`, `rxjs`, third-party, relative.
+- Never raise formatting in review; let the pre-commit hook format.
+- Write Conventional Commits with an emoji and the project name as scope; enforce with commitlint.
+- Run lint-staged on pre-commit, commitlint on commit-msg, and build and test on pre-push.
+- Hold a global coverage threshold of 80% and give every new spec full coverage of its own file.
+- Commit an `AGENTS.md` at the root and in areas with their own rules; keep the root file short.</pre>
+</section>
+    </article>
+  </div>
+  <nav class="pager wrap" aria-label="Chapters">
+    <a href="09-testing.html" rel="prev"><small>Before</small><span class="pn">09</span><span class="pt">Testing</span></a>
+    <a href="11-using-with-ai.html" rel="next"><small>Next</small><span class="pn">11</span><span class="pt">Using this guide with AI</span></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <p>Angular Philosophies, a style guide for Angular 22. Last verified against Angular 22.2 in November 2026.</p>
+  <p class="small">Type: IBM Plex.</p>
+</footer>
+<script src="../vendor/gsap.min.js"></script>
+<script src="../js/diagrams.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "angular-philosophies",
+  "description": "An opinionated Angular 22 style guide as a skill and an MCP server: signal stores, DDD libraries, a fake-based test toolkit, accessibility and RTL.",
+  "owner": {
+    "name": "Hatem",
+    "url": "https://github.com/tomavic"
+  },
+  "plugins": [
+    {
+      "name": "angular-philosophies",
+      "description": "An opinionated Angular 22 style guide as a skill and an MCP server: signal stores, DDD libraries, a fake-based test toolkit, accessibility and RTL.",
+      "source": "./",
+      "category": "development"
+    }
+  ]
+}

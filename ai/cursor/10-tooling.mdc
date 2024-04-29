@@ -1,0 +1,22 @@
+---
+description: Angular Philosophies, Tooling. pnpm, Nx, strict TypeScript, ESLint, Prettier, commits and hooks.
+globs: package.json,**/*.config.*,.prettierrc*
+alwaysApply: false
+---
+
+# Tooling
+
+- Use pnpm only, and run Nx through it (`pnpm nx ...`); use Nx generators and targets instead of `ng generate` and `ng build` in an Nx workspace.
+- Use `pnpm nx affected -t lint,test` for CI and pre-push checks.
+- Keep Angular and TypeScript at versions listed together on angular.dev/reference/versions; never move TypeScript ahead of Angular.
+- Enable `strict`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns` and `strictTemplates`; never disable a strict flag to pass a build.
+- Use an ESLint flat config with `@nx/enforce-module-boundaries`, `angular-eslint`, and the template accessibility rules.
+- Do not use `any`; if unavoidable, add an eslint-disable comment with the reason beside it.
+- Format with Prettier: 120 columns, single quotes, `trailingComma: all`, `arrowParens: avoid`, one attribute per line, imports sorted `@angular`, `rxjs`, third-party, relative.
+- Never raise formatting in review; let the pre-commit hook format.
+- Write Conventional Commits with an emoji and the project name as scope; enforce with commitlint.
+- Run lint-staged on pre-commit, commitlint on commit-msg, and build and test on pre-push.
+- Hold a global coverage threshold of 80% and give every new spec full coverage of its own file.
+- Commit an `AGENTS.md` at the root and in areas with their own rules; keep the root file short.
+
+Full chapter: https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/10-tooling.md

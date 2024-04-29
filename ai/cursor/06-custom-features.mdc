@@ -1,0 +1,18 @@
+---
+description: Angular Philosophies, Custom store features. Writing your own signalStoreFeature, withFeature, withLinkedState, and events between stores.
+globs: **/*.store.ts
+alwaysApply: false
+---
+
+# Custom store features
+
+- Write a custom `signalStoreFeature` only after the same block has been copied between stores three times.
+- Use one `status` field (`idle | loading | success | error`) instead of separate `loading`, `error` and `loaded` flags in `rxMethod` stores.
+- Do not use `withRequestStatus` with resources or mutations; they already track their own status.
+- Declare what a feature needs from the store with `type<>()` as its first argument so the compiler checks order.
+- Connect a reusable feature to a store's own signals with `withFeature`, not `withFeatureFactory`.
+- Use `withLinkedState` or `linkedSignal` for state that follows other state instead of an `effect` that sets signals.
+- Use `signalMethod` for reactions that need no operators, and `rxMethod` when they do.
+- Never inject one store into another; coordinate stores with `@ngrx/signals/events` event groups.
+
+Full chapter: https://raw.githubusercontent.com/tomavic/angular-philosophies/main/docs/06-custom-features.md
