@@ -2,6 +2,12 @@
 
 🧘 Things I think about when I write Angular code 🧘 inspired by [React Philosophies](https://github.com/mithi/react-philosophies/tree/main)
 
+
+The blog you would like to read if you are a beginner or an expert in Angular. It is a comprehensive resource designed to cater to all levels of proficiency, ensuring a seamless learning experience for newcomers and seasoned developers and eveyone who have to work with Wev Development.
+
+Whether you're new to Angular or want to get better at it, this blog is the perfect place for you. We shares the newest and most important updates about Angular, along with useful tips and tricks. Whether you're just starting out or want to improve your skills, this blog has the information you need to sail smoothly through Angular development.
+
+
 ![Forever a work in progress!](https://img.shields.io/badge/%20🚧%20Forever%20🚧%20%20-under%20construction-yellow.svg) [![StandWithPalestineBadgeBordered](https://raw.githubusercontent.com/saedyousef/StandWithPalestine/main/badges/flat/bordered/StandWithPalestine.svg)](https://techforpalestine.org/learn-more)
 
     ░░░░░░░░░░░░░▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
